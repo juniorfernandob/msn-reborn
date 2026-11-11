@@ -80,22 +80,24 @@
       font-weight: bold;
     }
 
-    /* Padrão desktop e mobile flexível */
-    .app-window {
-      width: 320px;
-      height: 540px;
-      max-width: 96vw;
-      max-height: 96vh;
+    /* Tela cheia fixa no PC e no Celular para a janela principal */
+    .fullscreen-main-window {
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: 100vw !important;
+      max-height: 100vh !important;
+      top: 0 !important;
+      left: 0 !important;
+      border-radius: 0 !important;
+      position: fixed !important;
     }
 
-    @media (max-width: 767px) {
-      .app-window {
-        width: 100vw !important;
-        height: 100vh !important;
-        max-width: 100vw !important;
-        max-height: 100vh !important;
-        border-radius: 0 !important;
-      }
+    /* Janela de login centralizada clássica */
+    .auth-window-size {
+      width: 340px;
+      height: 480px;
+      max-width: 92vw;
+      max-height: 92vh;
     }
 
     @keyframes nudgeShake {
@@ -131,8 +133,8 @@
   <div id="minimizedDock" class="absolute bottom-2 left-2 flex flex-col gap-1.5 z-50 pointer-events-auto"></div>
 
   <!-- ================= 1. AUTH WINDOW (LOGIN & CADASTRO) ================= -->
-  <div id="authWindow" class="msn-window-border app-window rounded-t-lg rounded-b-sm flex flex-col shadow-2xl z-45">
-    <div class="msn-titlebar px-3 py-2 flex items-center justify-between">
+  <div id="authWindow" class="msn-window-border auth-window-size rounded-t-lg rounded-b-sm flex flex-col shadow-2xl z-45">
+    <div class="msn-titlebar px-3 py-2 flex items-center justify-between" id="authTitleBar">
       <div class="flex items-center gap-2 pointer-events-none">
         <svg class="w-4 h-4 text-emerald-600 drop-shadow" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z"/>
@@ -227,65 +229,65 @@
   </div>
 
 
-  <!-- ================= 2. MAIN MESSENGER WINDOW ================= -->
-  <div id="mainWindow" class="hidden msn-window-border app-window rounded-none flex flex-col shadow-2xl z-40">
-    <div class="msn-titlebar px-3 py-2 flex items-center justify-between">
+  <!-- ================= 2. MAIN MESSENGER WINDOW (TELA CHEIA FIXA) ================= -->
+  <div id="mainWindow" class="hidden msn-window-border fullscreen-main-window flex flex-col shadow-2xl z-40">
+    <div class="msn-titlebar px-4 py-2.5 flex items-center justify-between">
       <div class="flex items-center gap-2">
         <i class="fa-solid fa-user-group text-emerald-600 text-sm"></i>
-        <span class="font-bold text-xs text-slate-800 truncate">MSN - <span id="windowUserTitle">Bruxão</span></span>
+        <span class="font-bold text-xs text-slate-800 truncate">MSN Messenger - <span id="windowUserTitle">Bruxão</span></span>
       </div>
-      <button onclick="performLogout()" class="msn-btn px-2 py-0.5 text-xs font-bold text-red-700 flex items-center gap-1 rounded shadow-sm hover:bg-red-50 shrink-0">
+      <button onclick="performLogout()" class="msn-btn px-2.5 py-1 text-xs font-bold text-red-700 flex items-center gap-1.5 rounded shadow-sm hover:bg-red-50 shrink-0">
         <i class="fa-solid fa-right-from-bracket"></i> Sair
       </button>
     </div>
 
     <div class="flex flex-col flex-1 overflow-hidden bg-white">
       <!-- Perfil Superior -->
-      <div class="p-3 bg-gradient-to-b from-blue-100/90 via-blue-50/70 to-slate-100 border-b border-blue-300 flex gap-3 items-center shrink-0">
+      <div class="p-4 bg-gradient-to-b from-blue-100/90 via-blue-50/70 to-slate-100 border-b border-blue-300 flex gap-4 items-center shrink-0">
         <div class="relative group cursor-pointer shrink-0" onclick="cycleAvatar()">
-          <img id="mainUserAvatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80" class="w-14 h-14 rounded border-2 border-white shadow object-cover">
-          <div id="mainUserStatusDot" class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full"></div>
+          <img id="mainUserAvatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80" class="w-16 h-16 rounded border-2 border-white shadow object-cover">
+          <div id="mainUserStatusDot" class="absolute bottom-0 right-0 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full"></div>
         </div>
 
         <div class="flex-1 min-w-0">
-          <div class="flex items-center gap-1.5">
-            <input type="text" id="mainUserName" value="Bruxão" class="font-bold text-xs text-slate-800 bg-transparent hover:bg-white focus:bg-white rounded px-1 py-0.5 w-full truncate border border-transparent focus:border-blue-400">
-            <select id="mainStatusSelect" onchange="changeUserStatus()" class="text-[11px] bg-white border border-blue-300 rounded px-1 py-0.5 focus:outline-none cursor-pointer shrink-0">
-              <option value="online">🟢 Disp.</option>
-              <option value="busy">🔴 Ocup.</option>
-              <option value="away">🟡 Aus.</option>
-              <option value="offline">⚪ Invis.</option>
+          <div class="flex items-center gap-2 max-w-md">
+            <input type="text" id="mainUserName" value="Bruxão" class="font-bold text-sm text-slate-800 bg-transparent hover:bg-white focus:bg-white rounded px-1.5 py-0.5 w-full truncate border border-transparent focus:border-blue-400">
+            <select id="mainStatusSelect" onchange="changeUserStatus()" class="text-xs bg-white border border-blue-300 rounded px-2 py-1 focus:outline-none cursor-pointer shrink-0">
+              <option value="online">🟢 Disponível</option>
+              <option value="busy">🔴 Ocupado</option>
+              <option value="away">🟡 Ausente</option>
+              <option value="offline">⚪ Invisível</option>
             </select>
           </div>
 
-          <input type="text" id="mainUserSubnick" value="★~* Lⲑkⲑ pⲑr Vⲑcê *~★" class="text-[11px] text-slate-600 bg-transparent hover:bg-white focus:bg-white rounded px-1 py-0.5 w-full truncate border border-transparent focus:border-blue-400 mt-0.5">
+          <input type="text" id="mainUserSubnick" value="★~* Lⲑkⲑ pⲑr Vⲑcê *~★" class="text-xs text-slate-600 bg-transparent hover:bg-white focus:bg-white rounded px-1.5 py-0.5 max-w-md truncate border border-transparent focus:border-blue-400 mt-1">
 
-          <div class="mt-1 flex items-center gap-1 text-[11px] text-blue-700">
-            <i class="fa-solid fa-music text-[9px] text-blue-500 animate-pulse"></i>
+          <div class="mt-1.5 flex items-center gap-1.5 text-xs text-blue-700">
+            <i class="fa-solid fa-music text-[10px] text-blue-500 animate-pulse"></i>
             <span id="nowPlayingTrack" onclick="cycleTrack()" class="truncate hover:underline cursor-pointer">Linkin Park - In The End</span>
           </div>
         </div>
       </div>
 
       <!-- Barra de Pesquisa -->
-      <div class="p-2.5 bg-slate-100 border-b border-slate-200 shrink-0">
-        <input type="text" placeholder="Procurar contato..." onkeyup="filterContactList(this.value)" class="w-full px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-full focus:outline-none focus:border-blue-400 shadow-inner">
+      <div class="p-3 bg-slate-100 border-b border-slate-200 shrink-0">
+        <input type="text" placeholder="Procurar contato..." onkeyup="filterContactList(this.value)" class="w-full max-w-md px-3.5 py-1.5 text-xs bg-white border border-slate-300 rounded-full focus:outline-none focus:border-blue-400 shadow-inner">
       </div>
 
       <!-- Lista de Contatos -->
-      <div class="flex-1 overflow-y-auto p-2.5 bg-white space-y-1.5" id="contactContainer">
+      <div class="flex-1 overflow-y-auto p-4 bg-white space-y-2" id="contactContainer">
         <div>
           <div class="flex items-center justify-between text-xs font-bold text-slate-700 px-1 py-1.5 border-b border-slate-200">
             <span><i class="fa-solid fa-caret-down text-slate-500 mr-1"></i> Contatos Online (<span id="countOnline">0</span>)</span>
           </div>
-          <div id="onlineGroup" class="mt-1.5 space-y-1"></div>
+          <div id="onlineGroup" class="mt-2 space-y-1"></div>
         </div>
       </div>
 
       <!-- Rodapé Principal -->
-      <div class="p-2.5 bg-gradient-to-t from-blue-100 to-slate-100 border-t border-blue-300 flex justify-between text-xs text-blue-900 font-bold shrink-0">
+      <div class="p-3 bg-gradient-to-t from-blue-100 to-slate-100 border-t border-blue-300 flex justify-between text-xs text-blue-900 font-bold shrink-0">
         <button onclick="openAddContactWindow()" class="hover:underline flex items-center gap-1.5"><i class="fa-solid fa-user-plus text-emerald-600"></i> Adicionar</button>
-        <button onclick="playLoginSound()" class="hover:underline flex items-center gap-1.5"><i class="fa-solid fa-volume-high text-blue-600"></i> Som</button>
+        <button onclick="playLoginSound()" class="hover:underline flex items-center gap-1.5"><i class="fa-solid fa-volume-high text-blue-600"></i> Testar Som</button>
       </div>
     </div>
   </div>
@@ -458,7 +460,7 @@
     function updateStatusDot() {
       const dot = document.getElementById('mainUserStatusDot');
       const colors = { online: 'bg-emerald-500', away: 'bg-amber-500', busy: 'bg-red-500', offline: 'bg-gray-400' };
-      dot.className = `absolute bottom-0 right-0 w-3.5 h-3.5 ${colors[currentUser.status]} border-2 border-white rounded-full`;
+      dot.className = `absolute bottom-0 right-0 w-4 h-4 ${colors[currentUser.status]} border-2 border-white rounded-full`;
     }
 
     function changeUserStatus() {
@@ -500,16 +502,16 @@
 
         count++;
         group.innerHTML += `
-          <div onclick="openChatWindow('${u.email}', '${u.name}')" class="flex items-center gap-2.5 p-2 rounded hover:bg-blue-100 cursor-pointer">
+          <div onclick="openChatWindow('${u.email}', '${u.name}')" class="flex items-center gap-3 p-2.5 rounded hover:bg-blue-100 cursor-pointer">
             <div class="relative shrink-0">
-              <div class="w-8 h-8 rounded bg-sky-300 border border-white flex items-center justify-center font-bold text-white text-xs">
+              <div class="w-10 h-10 rounded bg-sky-300 border border-white flex items-center justify-center font-bold text-white text-sm">
                 <i class="fa-solid fa-user"></i>
               </div>
-              <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border border-white rounded-full"></span>
+              <span class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border border-white rounded-full"></span>
             </div>
             <div class="flex-1 min-w-0">
-              <div class="text-xs font-bold text-slate-800 truncate">${u.name}</div>
-              <div class="text-[10px] text-slate-500 truncate">${u.email}</div>
+              <div class="text-sm font-bold text-slate-800 truncate">${u.name}</div>
+              <div class="text-xs text-slate-500 truncate">${u.email}</div>
             </div>
           </div>
         `;
@@ -524,16 +526,17 @@
     }
 
 
-    /* ================= DRAG & DROP SUPORTE MOUSE E TOUCH ================= */
+    /* ================= APENAS JANELA DE LOGIN É ARRASTÁVEL (PRINCIPAL É FIXA) ================= */
     function makeWindowDraggable(winElement) {
       const titleBar = winElement.querySelector('.msn-titlebar');
       let isDragging = false;
       let startX, startY, initialX, initialY;
 
-      function startDrag(clientX, clientY) {
+      titleBar.addEventListener('mousedown', (e) => {
+        if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
         isDragging = true;
-        startX = clientX;
-        startY = clientY;
+        startX = e.clientX;
+        startY = e.clientY;
         
         const rect = winElement.getBoundingClientRect();
         initialX = rect.left;
@@ -541,60 +544,61 @@
 
         winElement.style.position = 'fixed';
         winElement.style.zIndex = ++highestZIndex;
-      }
 
-      function doDrag(clientX, clientY) {
-        if (!isDragging) return;
-        const dx = clientX - startX;
-        const dy = clientY - startY;
-        winElement.style.left = `${initialX + dx}px`;
-        winElement.style.top = `${initialY + dy}px`;
-      }
-
-      function endDrag() {
-        isDragging = false;
-      }
-
-      titleBar.addEventListener('mousedown', (e) => {
-        if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
-        if (window.innerWidth < 768) return; // Não arrasta em tela cheia de celular
-        startDrag(e.clientX, e.clientY);
-        const onMouseMove = (ev) => doDrag(ev.clientX, ev.clientY);
+        const onMouseMove = (ev) => {
+          if (!isDragging) return;
+          winElement.style.left = `${initialX + (ev.clientX - startX)}px`;
+          winElement.style.top = `${initialY + (ev.clientY - startY)}px`;
+        };
         const onMouseUp = () => {
-          endDrag();
+          isDragging = false;
           document.removeEventListener('mousemove', onMouseMove);
           document.removeEventListener('mouseup', onMouseUp);
         };
         document.addEventListener('mousemove', onMouseMove);
         document.addEventListener('mouseup', onMouseUp);
       });
-
-      titleBar.addEventListener('touchstart', (e) => {
-        if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
-        if (window.innerWidth < 768) return;
-        const touch = e.touches[0];
-        startDrag(touch.clientX, touch.clientY);
-        const onTouchMove = (ev) => {
-          const t = ev.touches[0];
-          doDrag(t.clientX, t.clientY);
-        };
-        const onTouchEnd = () => {
-          endDrag();
-          document.removeEventListener('touchmove', onTouchMove);
-          document.removeEventListener('touchend', onTouchEnd);
-        };
-        document.addEventListener('touchmove', onTouchMove, { passive: false });
-        document.addEventListener('touchend', onTouchEnd);
-      }, { passive: true });
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-      makeWindowDraggable(document.getElementById('authWindow'));
-      makeWindowDraggable(document.getElementById('mainWindow'));
+      makeWindowDraggable(document.getElementById('authWindow')); // Apenas login é móvel
     });
 
 
-    /* ================= JANELAS DE CHAT ================= */
+    /* ================= JANELAS DE CHAT (LIVRES E ARRASTÁVEIS) ================= */
+    function makeChatDraggable(winElement) {
+      const titleBar = winElement.querySelector('.msn-titlebar');
+      let isDragging = false;
+      let startX, startY, initialX, initialY;
+
+      titleBar.addEventListener('mousedown', (e) => {
+        if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        
+        const rect = winElement.getBoundingClientRect();
+        initialX = rect.left;
+        initialY = rect.top;
+
+        winElement.style.position = 'fixed';
+        winElement.style.zIndex = ++highestZIndex;
+
+        const onMouseMove = (ev) => {
+          if (!isDragging) return;
+          winElement.style.left = `${initialX + (ev.clientX - startX)}px`;
+          winElement.style.top = `${initialY + (ev.clientY - startY)}px`;
+        };
+        const onMouseUp = () => {
+          isDragging = false;
+          document.removeEventListener('mousemove', onMouseMove);
+          document.removeEventListener('mouseup', onMouseUp);
+        };
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+      });
+    }
+
     function openChatWindow(email, name) {
       let winId = 'chatWin_' + email.replace(/[@.]/g, '_');
       let win = document.getElementById(winId);
@@ -605,7 +609,7 @@
         const bodyContent = win.querySelector('.chat-body-content');
         if (bodyContent) bodyContent.style.display = 'flex';
         const inputElem = document.getElementById(winId + '_input');
-        if (inputElem && window.innerWidth >= 768) inputElem.focus();
+        if (inputElem) inputElem.focus();
         return;
       }
 
@@ -616,12 +620,12 @@
       win.id = winId;
 
       const isMobile = window.innerWidth < 768;
-      win.className = `fixed ${isMobile ? 'w-full h-full top-0 left-0 rounded-none' : 'w-[420px] h-[440px] rounded-t-lg rounded-b-sm'} msn-window-border flex flex-col shadow-2xl resizable-window`;
+      win.className = `fixed ${isMobile ? 'w-full h-full top-0 left-0 rounded-none' : 'w-[440px] h-[460px] rounded-t-lg rounded-b-sm'} msn-window-border flex flex-col shadow-2xl resizable-window`;
       win.style.zIndex = ++highestZIndex;
 
       if (!isMobile) {
-        win.style.top = '100px';
-        win.style.left = '150px';
+        win.style.top = '120px';
+        win.style.left = '200px';
       }
 
       win.innerHTML = `
@@ -638,9 +642,9 @@
         </div>
 
         <div class="chat-body-content flex flex-col flex-1 overflow-hidden relative bg-white">
-          <div class="p-2 bg-gradient-to-r from-blue-100 via-blue-50 to-white border-b border-blue-300 flex items-center justify-between shrink-0">
-            <div class="flex items-center gap-2 min-w-0">
-              <div class="w-8 h-8 rounded bg-sky-300 border border-white flex items-center justify-center font-bold text-white shadow text-xs shrink-0">
+          <div class="p-2.5 bg-gradient-to-r from-blue-100 via-blue-50 to-white border-b border-blue-300 flex items-center justify-between shrink-0">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <div class="w-9 h-9 rounded bg-sky-300 border border-white flex items-center justify-center font-bold text-white shadow text-xs shrink-0">
                 <i class="fa-solid fa-user"></i>
               </div>
               <div class="min-w-0">
@@ -653,7 +657,7 @@
             </div>
           </div>
 
-          <div id="${winId}_log" class="flex-1 p-2.5 overflow-y-auto space-y-2 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:16px_16px]">
+          <div id="${winId}_log" class="flex-1 p-3 overflow-y-auto space-y-2.5 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:16px_16px]">
             <div class="text-center text-[10px] text-gray-400">--- Conversa iniciada com ${name} ---</div>
           </div>
 
@@ -698,7 +702,7 @@
               </button>
             </div>
 
-            <div class="p-2 bg-slate-50 border-t border-slate-200 flex gap-1.5 items-end">
+            <div class="p-2.5 bg-slate-50 border-t border-slate-200 flex gap-2 items-end">
               <textarea id="${winId}_input" rows="2" placeholder="Digite uma mensagem..." oninput="updateInputStyle('${winId}')" onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault(); submitMessage('${email}', '${winId}');}" class="flex-1 p-2 border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 text-xs resize-none shadow-inner"></textarea>
               <button onclick="submitMessage('${email}', '${winId}')" class="msn-btn px-3 py-2.5 rounded font-bold text-xs text-blue-900 shadow shrink-0">Enviar</button>
             </div>
@@ -707,7 +711,7 @@
       `;
 
       container.appendChild(win);
-      makeWindowDraggable(win);
+      makeChatDraggable(win);
       win.addEventListener('mousedown', () => { win.style.zIndex = ++highestZIndex; });
       win.addEventListener('touchstart', () => { win.style.zIndex = ++highestZIndex; }, { passive: true });
       
@@ -725,8 +729,8 @@
     function maximizeChat(winId) {
       const win = document.getElementById(winId);
       if (win.style.width === '100vw') {
-        win.style.width = '420px';
-        win.style.height = '440px';
+        win.style.width = '440px';
+        win.style.height = '460px';
       } else {
         win.style.width = '100vw';
         win.style.height = '100vh';
