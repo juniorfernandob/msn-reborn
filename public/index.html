@@ -116,14 +116,14 @@
       animation: nudgeShake 0.55s ease-in-out infinite;
     }
 
-    /* Animação gigante do Wink em tela cheia */
+    /* Animação gigante e fluida do Wink */
     @keyframes giantWinkAnim {
-      0% { transform: scale(0.1) rotate(-25deg); opacity: 0; filter: blur(10px); }
-      20% { transform: scale(1.3) rotate(10deg); opacity: 1; filter: blur(0px); }
-      40% { transform: scale(1) rotate(-5deg); opacity: 1; }
-      70% { transform: scale(1.15) rotate(5deg); opacity: 1; }
+      0% { transform: scale(0.1) rotate(-30deg); opacity: 0; filter: blur(12px); }
+      20% { transform: scale(1.4) rotate(10deg); opacity: 1; filter: blur(0px); }
+      40% { transform: scale(1.1) rotate(-5deg); opacity: 1; }
+      70% { transform: scale(1.25) rotate(5deg); opacity: 1; }
       85% { transform: scale(1) rotate(0deg); opacity: 1; }
-      100% { transform: scale(0.6) rotate(0deg); opacity: 0; filter: blur(8px); }
+      100% { transform: scale(0.5) rotate(0deg); opacity: 0; filter: blur(10px); }
     }
 
     .giant-wink-popup {
@@ -144,7 +144,7 @@
   <!-- DOCK DE JANELAS MINIMIZADAS -->
   <div id="minimizedDock" class="absolute bottom-2 left-2 flex flex-col gap-1.5 z-50 pointer-events-auto"></div>
 
-  <!-- CAMADA GLOBAL PARA EXIBIÇÃO DO WINK GIGANTE NA TELA -->
+  <!-- CAMADA GLOBAL ABSOLUTA PARA O WINK GIGANTE (COBRE TELA INTEIRA) -->
   <div id="globalWinkOverlay" class="fixed inset-0 pointer-events-none z-[999999] flex items-center justify-center"></div>
 
   <!-- ================= 1. AUTH WINDOW (LOGIN & CADASTRO) ================= -->
@@ -617,7 +617,7 @@
       let startX, startY, initialX, initialY;
 
       titleBar.addEventListener('mousedown', (e) => {
-        if (window.innerWidth < 768) return; // No celular não arrasta
+        if (window.innerWidth < 768) return;
         if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
         isDragging = true;
         startX = e.clientX;
@@ -683,7 +683,6 @@
       win = document.createElement('div');
       win.id = winId;
 
-      // Responsivo perfeito para celular e PC (impede que saia da tela)
       win.className = `fixed ${isMobile ? 'w-full h-full top-0 left-0 rounded-none' : 'w-[440px] h-[460px] rounded-t-lg rounded-b-sm'} msn-window-border flex flex-col shadow-2xl resizable-window`;
       win.style.zIndex = ++highestZIndex;
 
@@ -947,16 +946,16 @@
       });
     }
 
-    /* Exibição garantida do Wink Gigante na tela */
+    /* Função principal do Wink Gigante */
     function playGiantWink(emojiChar, senderName) {
       const overlay = document.getElementById('globalWinkOverlay');
       if (!overlay) return;
 
       const popup = document.createElement('div');
-      popup.className = 'giant-wink-popup flex flex-col items-center justify-center bg-black/80 backdrop-blur-md p-16 rounded-3xl shadow-2xl border-4 border-purple-400';
+      popup.className = 'giant-wink-popup flex flex-col items-center justify-center bg-black/85 backdrop-blur-md p-16 rounded-3xl shadow-2xl border-4 border-purple-400';
       popup.innerHTML = `
         <span class="text-[140px] mb-6 drop-shadow-[0_25px_25px_rgba(0,0,0,0.9)]">${emojiChar}</span>
-        <span class="text-white font-bold text-3xl drop-shadow-md bg-purple-900/95 px-8 py-3 rounded-full border-2 border-purple-300 shadow-xl">${senderName} enviou um Wink!</span>
+        <span class="text-white font-bold text-3xl drop-shadow-md bg-purple-950/95 px-8 py-3 rounded-full border-2 border-purple-300 shadow-xl">${senderName} enviou um Wink!</span>
       `;
 
       overlay.appendChild(popup);
@@ -973,9 +972,7 @@
         gain.gain.exponentialRampToValueAtTime(0.001, now + 2.2);
         osc.connect(gain); gain.connect(audioCtx.destination);
         osc.start(now); osc.stop(now + 2.2);
-      } catch(e) {
-        // Áudio tolerante caso o navegador bloqueie
-      }
+      } catch(e) {}
 
       setTimeout(() => {
         popup.remove();
@@ -1005,7 +1002,7 @@
             }
           }
 
-          // Dispara o Wink Gigante na tela de quem recebe
+          // AQUI ESTAVA O PROBLEMA: Garante que o Wink gigante disparue para quem recebe
           if (data.isWink && data.senderEmail !== currentUser.email) {
             playGiantWink(data.winkEmoji, data.senderName);
           }
