@@ -77,13 +77,27 @@
       font-weight: bold;
     }
 
-    .resizable-window {
-      resize: both;
-      overflow: hidden;
-      min-width: 300px;
-      min-height: 380px;
-      max-width: 100vw;
-      max-height: 100vh;
+    /* Tamanhos fixos clássicos para PC */
+    @media (min-width: 768px) {
+      .desktop-auth-size {
+        width: 340px !important;
+        height: 480px !important;
+      }
+      .desktop-main-size {
+        width: 320px !important;
+        height: 560px !important;
+      }
+    }
+
+    /* Responsivo para Celular */
+    @media (max-width: 767px) {
+      .mobile-full-size {
+        width: 100vw !important;
+        height: 100vh !important;
+        top: 0 !important;
+        left: 0 !important;
+        border-radius: 0 !important;
+      }
     }
 
     @keyframes nudgeShake {
@@ -113,13 +127,13 @@
     }
   </style>
 </head>
-<body class="flex items-center justify-center p-1 relative overflow-hidden h-screen w-screen">
+<body class="flex items-center justify-center relative overflow-hidden h-screen w-screen">
 
   <!-- DOCK DE JANELAS MINIMIZADAS -->
   <div id="minimizedDock" class="absolute bottom-2 left-2 flex flex-col gap-1.5 z-50 pointer-events-auto"></div>
 
   <!-- ================= 1. AUTH WINDOW (LOGIN & CADASTRO) ================= -->
-  <div id="authWindow" class="msn-window-border w-80 max-w-[92vw] min-w-[280px] rounded-t-lg rounded-b-sm flex flex-col shadow-2xl absolute z-45">
+  <div id="authWindow" class="msn-window-border desktop-auth-size w-[92vw] rounded-t-lg rounded-b-sm flex flex-col shadow-2xl absolute z-45">
     <div class="msn-titlebar px-3 py-2 flex items-center justify-between">
       <div class="flex items-center gap-2 pointer-events-none">
         <svg class="w-4 h-4 text-emerald-600 drop-shadow" viewBox="0 0 24 24" fill="currentColor">
@@ -130,7 +144,7 @@
     </div>
 
     <div class="bg-gradient-to-b from-blue-50/90 via-white to-blue-100/60 p-4 flex flex-col items-center overflow-y-auto flex-1">
-      <div class="relative my-1.5 flex items-center justify-center">
+      <div class="relative my-2 flex items-center justify-center">
         <div class="w-16 h-16 bg-gradient-to-tr from-sky-400 to-emerald-300 rounded-full flex items-center justify-center shadow-lg border-2 border-white">
           <div class="flex -space-x-2">
             <i class="fa-solid fa-user-large text-emerald-600 text-2xl drop-shadow"></i>
@@ -169,46 +183,46 @@
       </div>
 
       <!-- Formulário de Login -->
-      <div id="loginForm" class="w-full space-y-2.5">
+      <div id="loginForm" class="w-full space-y-3">
         <div>
           <label class="block text-[11px] font-bold text-slate-700 mb-0.5">Endereço de e-mail:</label>
-          <input type="email" id="loginEmail" placeholder="seu_nome@hotmail.com" class="w-full px-2 py-1 text-xs border border-blue-400 rounded shadow-inner">
+          <input type="email" id="loginEmail" placeholder="seu_nome@hotmail.com" class="w-full px-2.5 py-1.5 text-xs border border-blue-400 rounded shadow-inner">
         </div>
         <div>
           <label class="block text-[11px] font-bold text-slate-700 mb-0.5">Senha:</label>
-          <input type="password" id="loginPassword" class="w-full px-2 py-1 text-xs border border-blue-400 rounded shadow-inner">
+          <input type="password" id="loginPassword" class="w-full px-2.5 py-1.5 text-xs border border-blue-400 rounded shadow-inner">
         </div>
         <div>
           <label class="block text-[11px] font-bold text-slate-700 mb-0.5">Entrar como:</label>
-          <select id="loginInitialStatus" class="w-full px-2 py-1 text-xs border border-blue-400 rounded bg-white cursor-pointer">
+          <select id="loginInitialStatus" class="w-full px-2.5 py-1.5 text-xs border border-blue-400 rounded bg-white cursor-pointer">
             <option value="online">🟢 Disponível</option>
             <option value="busy">🔴 Ocupado</option>
             <option value="away">🟡 Ausente</option>
             <option value="offline">⚪ Invisível</option>
           </select>
         </div>
-        <button onclick="performLogin()" class="w-full msn-btn py-1.5 font-bold text-xs text-blue-900 rounded shadow mt-1">Entrar</button>
+        <button onclick="performLogin()" class="w-full msn-btn py-2 font-bold text-xs text-blue-900 rounded shadow mt-2">Entrar</button>
       </div>
 
       <!-- Formulário de Cadastro -->
-      <div id="registerForm" class="hidden w-full space-y-2.5">
+      <div id="registerForm" class="hidden w-full space-y-3">
         <div>
           <label class="block text-[11px] font-bold text-slate-700 mb-0.5">Nome de exibição:</label>
-          <input type="text" id="regName" placeholder="Ex: Bruxão Loko" class="w-full px-2 py-1 text-xs border border-blue-400 rounded shadow-inner">
+          <input type="text" id="regName" placeholder="Ex: Bruxão Loko" class="w-full px-2.5 py-1.5 text-xs border border-blue-400 rounded shadow-inner">
         </div>
         <div>
           <label class="block text-[11px] font-bold text-slate-700 mb-0.5">E-mail real:</label>
-          <input type="email" id="regEmail" placeholder="usuario@hotmail.com" class="w-full px-2 py-1 text-xs border border-blue-400 rounded shadow-inner">
+          <input type="email" id="regEmail" placeholder="usuario@hotmail.com" class="w-full px-2.5 py-1.5 text-xs border border-blue-400 rounded shadow-inner">
         </div>
         <div>
           <label class="block text-[11px] font-bold text-slate-700 mb-0.5">Senha:</label>
-          <input type="password" id="regPassword" placeholder="••••••••" class="w-full px-2 py-1 text-xs border border-blue-400 rounded shadow-inner">
+          <input type="password" id="regPassword" placeholder="••••••••" class="w-full px-2.5 py-1.5 text-xs border border-blue-400 rounded shadow-inner">
         </div>
-        <button onclick="performRegister()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-1.5 font-bold text-xs rounded shadow border border-emerald-800">Cadastrar Conta</button>
+        <button onclick="performRegister()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 font-bold text-xs rounded shadow border border-emerald-800">Cadastrar Conta</button>
       </div>
     </div>
 
-    <div class="bg-blue-100 border-t border-blue-300 px-3 py-1 flex justify-between items-center text-[10px] text-slate-600">
+    <div class="bg-blue-100 border-t border-blue-300 px-3 py-1.5 flex justify-between items-center text-[10px] text-slate-600">
       <span>.NET Messenger Service</span>
       <span>v7.5</span>
     </div>
@@ -216,7 +230,7 @@
 
 
   <!-- ================= 2. MAIN MESSENGER WINDOW ================= -->
-  <div id="mainWindow" class="hidden msn-window-border rounded-none flex flex-col shadow-2xl absolute z-40">
+  <div id="mainWindow" class="hidden msn-window-border desktop-main-size rounded-none flex flex-col shadow-2xl absolute z-40">
     <div class="msn-titlebar px-3 py-2 flex items-center justify-between">
       <div class="flex items-center gap-2">
         <i class="fa-solid fa-user-group text-emerald-600 text-sm"></i>
@@ -256,24 +270,24 @@
       </div>
 
       <!-- Barra de Pesquisa -->
-      <div class="p-2 bg-slate-100 border-b border-slate-200 shrink-0">
-        <input type="text" placeholder="Procurar contato..." onkeyup="filterContactList(this.value)" class="w-full px-2.5 py-1 text-xs bg-white border border-slate-300 rounded-full focus:outline-none focus:border-blue-400 shadow-inner">
+      <div class="p-2.5 bg-slate-100 border-b border-slate-200 shrink-0">
+        <input type="text" placeholder="Procurar contato..." onkeyup="filterContactList(this.value)" class="w-full px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-full focus:outline-none focus:border-blue-400 shadow-inner">
       </div>
 
       <!-- Lista de Contatos -->
-      <div class="flex-1 overflow-y-auto p-2 bg-white space-y-1.5" id="contactContainer">
+      <div class="flex-1 overflow-y-auto p-2.5 bg-white space-y-1.5" id="contactContainer">
         <div>
-          <div class="flex items-center justify-between text-xs font-bold text-slate-700 px-1 py-1 border-b border-slate-200">
+          <div class="flex items-center justify-between text-xs font-bold text-slate-700 px-1 py-1.5 border-b border-slate-200">
             <span><i class="fa-solid fa-caret-down text-slate-500 mr-1"></i> Contatos Online (<span id="countOnline">0</span>)</span>
           </div>
-          <div id="onlineGroup" class="mt-1 space-y-1"></div>
+          <div id="onlineGroup" class="mt-1.5 space-y-1"></div>
         </div>
       </div>
 
       <!-- Rodapé Principal -->
-      <div class="p-2 bg-gradient-to-t from-blue-100 to-slate-100 border-t border-blue-300 flex justify-between text-xs text-blue-900 font-bold shrink-0">
-        <button onclick="openAddContactWindow()" class="hover:underline flex items-center gap-1"><i class="fa-solid fa-user-plus text-emerald-600"></i> Adicionar</button>
-        <button onclick="playLoginSound()" class="hover:underline flex items-center gap-1"><i class="fa-solid fa-volume-high text-blue-600"></i> Som</button>
+      <div class="p-2.5 bg-gradient-to-t from-blue-100 to-slate-100 border-t border-blue-300 flex justify-between text-xs text-blue-900 font-bold shrink-0">
+        <button onclick="openAddContactWindow()" class="hover:underline flex items-center gap-1.5"><i class="fa-solid fa-user-plus text-emerald-600"></i> Adicionar</button>
+        <button onclick="playLoginSound()" class="hover:underline flex items-center gap-1.5"><i class="fa-solid fa-volume-high text-blue-600"></i> Som</button>
       </div>
     </div>
   </div>
@@ -291,6 +305,14 @@
     let highestZIndex = 100;
 
     function centerWindow(winElement, width, height) {
+      if (window.innerWidth < 768) {
+        winElement.className = winElement.className.replace(/desktop-\w+-size/g, '') + ' mobile-full-size';
+        winElement.style.position = 'fixed';
+        winElement.style.top = '0px';
+        winElement.style.left = '0px';
+        return;
+      }
+      
       winElement.style.width = width;
       winElement.style.height = height;
       const w = winElement.offsetWidth || parseInt(width);
@@ -305,13 +327,7 @@
     /* Centralizar janela de login logo ao carregar */
     window.addEventListener('DOMContentLoaded', () => {
       const authWin = document.getElementById('authWindow');
-      if (window.innerWidth >= 768) {
-        authWin.style.width = '320px';
-        centerWindow(authWin, '320px', '460px');
-      } else {
-        authWin.style.width = '92vw';
-        centerWindow(authWin, '92vw', '440px');
-      }
+      centerWindow(authWin, '340px', '480px');
       makeWindowDraggable(authWin);
     });
 
@@ -453,14 +469,7 @@
         const mainWin = document.getElementById('mainWindow');
         mainWin.classList.remove('hidden');
 
-        if (window.innerWidth < 768) {
-          mainWin.style.width = '100vw';
-          mainWin.style.height = '100vh';
-          mainWin.style.top = '0px';
-          mainWin.style.left = '0px';
-        } else {
-          centerWindow(mainWin, '320px', '540px');
-        }
+        centerWindow(mainWin, '320px', '560px');
 
         document.getElementById('windowUserTitle').innerText = currentUser.name;
         document.getElementById('mainUserName').value = currentUser.name;
