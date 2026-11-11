@@ -33,15 +33,14 @@ const onlineUsers = {};
 io.on('connection', (socket) => {
   console.log('🔌 Novo usuário conectado:', socket.id);
 
-  // Atualização de perfil em tempo real (Nome, Status, Foto)
   socket.on('update_profile', (data) => {
     const user = connectedUsers.get(socket.id);
     if (user) {
       user.name = data.name || user.name;
       user.status = data.status || user.status;
+      user.subnick = data.subnick !== undefined ? data.subnick : user.subnick;
       user.avatar = data.avatar || user.avatar;
       
-      // Transmite a lista de contatos atualizada para todos os conectados
       const userList = Array.from(connectedUsers.values());
       io.emit('update_contact_list', userList);
     }
