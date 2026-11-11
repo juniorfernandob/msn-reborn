@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>MSN Messenger 7.5 - Reborn (Online)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="/socket.io/socket.io.js"></script>
@@ -30,6 +30,7 @@
       background: linear-gradient(180deg, #e3f0fb 0%, #badaf6 45%, #92c4f4 50%, #b0d5f7 100%);
       border-bottom: 1px solid #5a94d0;
       cursor: move;
+      touch-action: none;
     }
 
     .msn-btn {
@@ -79,8 +80,10 @@
     .resizable-window {
       resize: both;
       overflow: hidden;
-      min-width: 340px;
-      min-height: 400px;
+      min-width: 300px;
+      min-height: 380px;
+      max-width: 100vw;
+      max-height: 100vh;
     }
 
     @keyframes nudgeShake {
@@ -101,7 +104,7 @@
       animation: nudgeShake 0.55s ease-in-out infinite;
     }
 
-    ::-webkit-scrollbar { width: 14px; height: 14px; }
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
     ::-webkit-scrollbar-track { background: #f0f4f8; border-left: 1px solid #c0d0e0; }
     ::-webkit-scrollbar-thumb {
       background: linear-gradient(180deg, #dce8f5 0%, #a2c4e8 100%);
@@ -110,13 +113,13 @@
     }
   </style>
 </head>
-<body class="flex items-center justify-center p-2 relative overflow-hidden h-screen w-screen">
+<body class="flex items-center justify-center p-1 relative overflow-hidden h-screen w-screen">
 
   <!-- DOCK DE JANELAS MINIMIZADAS -->
-  <div id="minimizedDock" class="absolute bottom-3 left-3 flex flex-col gap-1.5 z-50 pointer-events-auto"></div>
+  <div id="minimizedDock" class="absolute bottom-2 left-2 flex flex-col gap-1.5 z-50 pointer-events-auto"></div>
 
   <!-- ================= 1. AUTH WINDOW (LOGIN & CADASTRO) ================= -->
-  <div id="authWindow" class="msn-window-border w-80 min-w-[280px] rounded-t-lg rounded-b-sm flex flex-col shadow-2xl absolute z-45">
+  <div id="authWindow" class="msn-window-border w-80 max-w-[92vw] min-w-[280px] rounded-t-lg rounded-b-sm flex flex-col shadow-2xl absolute z-45">
     <div class="msn-titlebar px-3 py-2 flex items-center justify-between">
       <div class="flex items-center gap-2 pointer-events-none">
         <svg class="w-4 h-4 text-emerald-600 drop-shadow" viewBox="0 0 24 24" fill="currentColor">
@@ -126,38 +129,38 @@
       </div>
     </div>
 
-    <div class="bg-gradient-to-b from-blue-50/90 via-white to-blue-100/60 p-5 flex flex-col items-center overflow-y-auto flex-1">
-      <div class="relative my-2 flex items-center justify-center">
-        <div class="w-20 h-20 bg-gradient-to-tr from-sky-400 to-emerald-300 rounded-full flex items-center justify-center shadow-lg border-2 border-white">
+    <div class="bg-gradient-to-b from-blue-50/90 via-white to-blue-100/60 p-4 flex flex-col items-center overflow-y-auto flex-1">
+      <div class="relative my-1.5 flex items-center justify-center">
+        <div class="w-16 h-16 bg-gradient-to-tr from-sky-400 to-emerald-300 rounded-full flex items-center justify-center shadow-lg border-2 border-white">
           <div class="flex -space-x-2">
-            <i class="fa-solid fa-user-large text-emerald-600 text-3xl drop-shadow"></i>
-            <i class="fa-solid fa-user-large text-sky-600 text-3xl drop-shadow"></i>
+            <i class="fa-solid fa-user-large text-emerald-600 text-2xl drop-shadow"></i>
+            <i class="fa-solid fa-user-large text-sky-600 text-2xl drop-shadow"></i>
           </div>
         </div>
       </div>
 
-      <div class="w-full flex border-b border-blue-300 mb-4 text-xs font-bold text-blue-900">
+      <div class="w-full flex border-b border-blue-300 mb-3 text-xs font-bold text-blue-900">
         <button id="tabLoginBtn" onclick="switchAuthTab('login')" class="flex-1 py-1.5 text-center bg-white border border-b-0 border-blue-300 rounded-t text-blue-700 shadow-sm">Entrar</button>
         <button id="tabRegisterBtn" onclick="switchAuthTab('register')" class="flex-1 py-1.5 text-center bg-blue-100/60 hover:bg-white/60 border border-b-0 border-transparent rounded-t text-slate-600">Criar Conta</button>
       </div>
 
-      <div id="emailConfirmationAlert" class="hidden w-full mb-3 p-2.5 bg-emerald-50 border border-emerald-400 rounded text-[11px] text-emerald-800 shadow-sm">
-        <div class="font-bold flex items-center gap-1 mb-1">
+      <div id="emailConfirmationAlert" class="hidden w-full mb-3 p-2 bg-emerald-50 border border-emerald-400 rounded text-[11px] text-emerald-800 shadow-sm">
+        <div class="font-bold flex items-center gap-1 mb-0.5">
           <i class="fa-solid fa-envelope-circle-check text-emerald-600 text-sm"></i>
           <span>Conta criada com sucesso!</span>
         </div>
         <p class="leading-tight">Faça o login abaixo.</p>
       </div>
 
-      <div id="registerErrorAlert" class="hidden w-full mb-3 p-2.5 bg-red-50 border border-red-400 rounded text-[11px] text-red-800 shadow-sm">
+      <div id="registerErrorAlert" class="hidden w-full mb-3 p-2 bg-red-50 border border-red-400 rounded text-[11px] text-red-800 shadow-sm">
         <div class="font-bold flex items-center gap-1 mb-0.5">
           <i class="fa-solid fa-triangle-exclamation text-red-600 text-sm"></i>
           <span>Erro no Cadastro</span>
         </div>
-        <p id="registerErrorMsg">Preencha todos os campos corretamente.</p>
+        <p id="registerErrorMsg">Preencha todos os campos.</p>
       </div>
 
-      <div id="loginErrorAlert" class="hidden w-full mb-3 p-2.5 bg-red-50 border border-red-400 rounded text-[11px] text-red-800 shadow-sm">
+      <div id="loginErrorAlert" class="hidden w-full mb-3 p-2 bg-red-50 border border-red-400 rounded text-[11px] text-red-800 shadow-sm">
         <div class="font-bold flex items-center gap-1 mb-0.5">
           <i class="fa-solid fa-triangle-exclamation text-red-600 text-sm"></i>
           <span>Erro ao entrar</span>
@@ -166,7 +169,7 @@
       </div>
 
       <!-- Formulário de Login -->
-      <div id="loginForm" class="w-full space-y-3">
+      <div id="loginForm" class="w-full space-y-2.5">
         <div>
           <label class="block text-[11px] font-bold text-slate-700 mb-0.5">Endereço de e-mail:</label>
           <input type="email" id="loginEmail" placeholder="seu_nome@hotmail.com" class="w-full px-2 py-1 text-xs border border-blue-400 rounded shadow-inner">
@@ -184,17 +187,17 @@
             <option value="offline">⚪ Invisível</option>
           </select>
         </div>
-        <button onclick="performLogin()" class="w-full msn-btn py-1.5 font-bold text-xs text-blue-900 rounded shadow mt-2">Entrar</button>
+        <button onclick="performLogin()" class="w-full msn-btn py-1.5 font-bold text-xs text-blue-900 rounded shadow mt-1">Entrar</button>
       </div>
 
       <!-- Formulário de Cadastro -->
-      <div id="registerForm" class="hidden w-full space-y-3">
+      <div id="registerForm" class="hidden w-full space-y-2.5">
         <div>
-          <label class="block text-[11px] font-bold text-slate-700 mb-0.5">Nome de exibição (Nick):</label>
+          <label class="block text-[11px] font-bold text-slate-700 mb-0.5">Nome de exibição:</label>
           <input type="text" id="regName" placeholder="Ex: Bruxão Loko" class="w-full px-2 py-1 text-xs border border-blue-400 rounded shadow-inner">
         </div>
         <div>
-          <label class="block text-[11px] font-bold text-slate-700 mb-0.5">E-mail real para cadastro:</label>
+          <label class="block text-[11px] font-bold text-slate-700 mb-0.5">E-mail real:</label>
           <input type="email" id="regEmail" placeholder="usuario@hotmail.com" class="w-full px-2 py-1 text-xs border border-blue-400 rounded shadow-inner">
         </div>
         <div>
@@ -207,7 +210,7 @@
 
     <div class="bg-blue-100 border-t border-blue-300 px-3 py-1 flex justify-between items-center text-[10px] text-slate-600">
       <span>.NET Messenger Service</span>
-      <span>v7.5.0311</span>
+      <span>v7.5</span>
     </div>
   </div>
 
@@ -217,60 +220,60 @@
     <div class="msn-titlebar px-3 py-2 flex items-center justify-between">
       <div class="flex items-center gap-2">
         <i class="fa-solid fa-user-group text-emerald-600 text-sm"></i>
-        <span class="font-bold text-xs text-slate-800">MSN Messenger - <span id="windowUserTitle">Bruxão Loko</span></span>
+        <span class="font-bold text-xs text-slate-800 truncate">MSN - <span id="windowUserTitle">Bruxão</span></span>
       </div>
-      <button onclick="performLogout()" class="msn-btn px-2.5 py-0.5 text-xs font-bold text-red-700 flex items-center gap-1 rounded shadow-sm hover:bg-red-50">
+      <button onclick="performLogout()" class="msn-btn px-2 py-0.5 text-xs font-bold text-red-700 flex items-center gap-1 rounded shadow-sm hover:bg-red-50 shrink-0">
         <i class="fa-solid fa-right-from-bracket"></i> Sair
       </button>
     </div>
 
     <div class="flex flex-col flex-1 overflow-hidden bg-white">
       <!-- Perfil Superior -->
-      <div class="p-4 bg-gradient-to-b from-blue-100/90 via-blue-50/70 to-slate-100 border-b border-blue-300 flex gap-4 items-center shrink-0">
-        <div class="relative group cursor-pointer" onclick="cycleAvatar()">
-          <img id="mainUserAvatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80" class="w-16 h-16 rounded border-2 border-white shadow object-cover">
-          <div id="mainUserStatusDot" class="absolute bottom-0 right-0 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full"></div>
+      <div class="p-3 bg-gradient-to-b from-blue-100/90 via-blue-50/70 to-slate-100 border-b border-blue-300 flex gap-3 items-center shrink-0">
+        <div class="relative group cursor-pointer shrink-0" onclick="cycleAvatar()">
+          <img id="mainUserAvatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80" class="w-14 h-14 rounded border-2 border-white shadow object-cover">
+          <div id="mainUserStatusDot" class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full"></div>
         </div>
 
         <div class="flex-1 min-w-0">
-          <div class="flex items-center gap-2">
-            <input type="text" id="mainUserName" value="Bruxão Loko" class="font-bold text-sm text-slate-800 bg-transparent hover:bg-white focus:bg-white rounded px-1.5 py-0.5 w-full truncate border border-transparent focus:border-blue-400">
-            <select id="mainStatusSelect" onchange="changeUserStatus()" class="text-xs bg-white border border-blue-300 rounded px-2 py-1 focus:outline-none cursor-pointer">
-              <option value="online">🟢 Disponível</option>
-              <option value="busy">🔴 Ocupado</option>
-              <option value="away">🟡 Ausente</option>
-              <option value="offline">⚪ Invisível</option>
+          <div class="flex items-center gap-1.5">
+            <input type="text" id="mainUserName" value="Bruxão" class="font-bold text-xs text-slate-800 bg-transparent hover:bg-white focus:bg-white rounded px-1 py-0.5 w-full truncate border border-transparent focus:border-blue-400">
+            <select id="mainStatusSelect" onchange="changeUserStatus()" class="text-[11px] bg-white border border-blue-300 rounded px-1 py-0.5 focus:outline-none cursor-pointer shrink-0">
+              <option value="online">🟢 Disp.</option>
+              <option value="busy">🔴 Ocup.</option>
+              <option value="away">🟡 Aus.</option>
+              <option value="offline">⚪ Invis.</option>
             </select>
           </div>
 
-          <input type="text" id="mainUserSubnick" value="★~* Lⲑkⲑ pⲑr Vⲑcê *~★" class="text-xs text-slate-600 bg-transparent hover:bg-white focus:bg-white rounded px-1.5 py-0.5 w-full truncate border border-transparent focus:border-blue-400 mt-1">
+          <input type="text" id="mainUserSubnick" value="★~* Lⲑkⲑ pⲑr Vⲑcê *~★" class="text-[11px] text-slate-600 bg-transparent hover:bg-white focus:bg-white rounded px-1 py-0.5 w-full truncate border border-transparent focus:border-blue-400 mt-0.5">
 
-          <div class="mt-1.5 flex items-center gap-1.5 text-xs text-blue-700">
-            <i class="fa-solid fa-music text-[10px] text-blue-500 animate-pulse"></i>
+          <div class="mt-1 flex items-center gap-1 text-[11px] text-blue-700">
+            <i class="fa-solid fa-music text-[9px] text-blue-500 animate-pulse"></i>
             <span id="nowPlayingTrack" onclick="cycleTrack()" class="truncate hover:underline cursor-pointer">Linkin Park - In The End</span>
           </div>
         </div>
       </div>
 
       <!-- Barra de Pesquisa -->
-      <div class="p-2.5 bg-slate-100 border-b border-slate-200 shrink-0">
-        <input type="text" placeholder="Procurar contato..." onkeyup="filterContactList(this.value)" class="w-full px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-full focus:outline-none focus:border-blue-400 shadow-inner">
+      <div class="p-2 bg-slate-100 border-b border-slate-200 shrink-0">
+        <input type="text" placeholder="Procurar contato..." onkeyup="filterContactList(this.value)" class="w-full px-2.5 py-1 text-xs bg-white border border-slate-300 rounded-full focus:outline-none focus:border-blue-400 shadow-inner">
       </div>
 
       <!-- Lista de Contatos -->
-      <div class="flex-1 overflow-y-auto p-3 bg-white space-y-2" id="contactContainer">
+      <div class="flex-1 overflow-y-auto p-2 bg-white space-y-1.5" id="contactContainer">
         <div>
-          <div class="flex items-center justify-between text-xs font-bold text-slate-700 px-1 py-1.5 border-b border-slate-200 cursor-pointer">
-            <span><i class="fa-solid fa-caret-down text-slate-500 mr-1"></i> Contatos Online na Rede (<span id="countOnline">0</span>)</span>
+          <div class="flex items-center justify-between text-xs font-bold text-slate-700 px-1 py-1 border-b border-slate-200">
+            <span><i class="fa-solid fa-caret-down text-slate-500 mr-1"></i> Contatos Online (<span id="countOnline">0</span>)</span>
           </div>
           <div id="onlineGroup" class="mt-1 space-y-1"></div>
         </div>
       </div>
 
       <!-- Rodapé Principal -->
-      <div class="p-2.5 bg-gradient-to-t from-blue-100 to-slate-100 border-t border-blue-300 flex justify-between text-xs text-blue-900 font-bold shrink-0">
-        <button onclick="openAddContactWindow()" class="hover:underline flex items-center gap-1.5"><i class="fa-solid fa-user-plus text-emerald-600"></i> Adicionar</button>
-        <button onclick="playLoginSound()" class="hover:underline flex items-center gap-1.5"><i class="fa-solid fa-volume-high text-blue-600"></i> Testar Som</button>
+      <div class="p-2 bg-gradient-to-t from-blue-100 to-slate-100 border-t border-blue-300 flex justify-between text-xs text-blue-900 font-bold shrink-0">
+        <button onclick="openAddContactWindow()" class="hover:underline flex items-center gap-1"><i class="fa-solid fa-user-plus text-emerald-600"></i> Adicionar</button>
+        <button onclick="playLoginSound()" class="hover:underline flex items-center gap-1"><i class="fa-solid fa-volume-high text-blue-600"></i> Som</button>
       </div>
     </div>
   </div>
@@ -286,6 +289,17 @@
     let allOnlineUsers = [];
     const chatStyles = {};
     let highestZIndex = 100;
+
+    /* Centralizar janela na tela ao abrir (responsivo mobile/desktop) */
+    function centerWindow(winElement) {
+      const w = winElement.offsetWidth || 360;
+      const h = winElement.offsetHeight || 420;
+      const x = Math.max(10, (window.innerWidth - w) / 2);
+      const y = Math.max(10, (window.innerHeight - h) / 2);
+      winElement.style.position = 'fixed';
+      winElement.style.left = `${x}px`;
+      winElement.style.top = `${y}px`;
+    }
 
     /* Audio Synth */
     const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -373,12 +387,12 @@
       regErrorBox.classList.add('hidden');
 
       if (!name || !email || !password) {
-        regErrorMsg.innerText = 'Preencha todos os campos para se cadastrar.';
+        regErrorMsg.innerText = 'Preencha todos os campos.';
         regErrorBox.classList.remove('hidden');
         return;
       }
       if (!isValidEmail(email)) {
-        regErrorMsg.innerText = 'Insira um e-mail real e válido.';
+        regErrorMsg.innerText = 'Insira um e-mail válido.';
         regErrorBox.classList.remove('hidden');
         return;
       }
@@ -406,7 +420,7 @@
       loginErrorBox.classList.add('hidden');
 
       if (!email || !password) {
-        loginErrorMsg.innerText = 'Digite o e-mail e a senha.';
+        loginErrorMsg.innerText = 'Digite e-mail e senha.';
         loginErrorBox.classList.remove('hidden');
         return;
       }
@@ -419,17 +433,22 @@
         currentUser = res.user;
         currentUser.status = document.getElementById('loginInitialStatus').value;
 
-        // Entrar na sala pessoal no Socket para receber mensagens diretas
         socket.emit('join_room', currentUser.email);
 
         document.getElementById('authWindow').classList.add('hidden');
         const mainWin = document.getElementById('mainWindow');
         mainWin.classList.remove('hidden');
-        mainWin.style.position = 'fixed';
-        mainWin.style.top = '0px';
-        mainWin.style.left = '0px';
-        mainWin.style.width = '100vw';
-        mainWin.style.height = '100vh';
+
+        if (window.innerWidth < 768) {
+          mainWin.style.width = '100vw';
+          mainWin.style.height = '100vh';
+          mainWin.style.top = '0px';
+          mainWin.style.left = '0px';
+        } else {
+          mainWin.style.width = '360px';
+          mainWin.style.height = '520px';
+          centerWindow(mainWin);
+        }
 
         document.getElementById('windowUserTitle').innerText = currentUser.name;
         document.getElementById('mainUserName').value = currentUser.name;
@@ -449,7 +468,7 @@
     function updateStatusDot() {
       const dot = document.getElementById('mainUserStatusDot');
       const colors = { online: 'bg-emerald-500', away: 'bg-amber-500', busy: 'bg-red-500', offline: 'bg-gray-400' };
-      dot.className = `absolute bottom-0 right-0 w-4 h-4 ${colors[currentUser.status]} border-2 border-white rounded-full`;
+      dot.className = `absolute bottom-0 right-0 w-3.5 h-3.5 ${colors[currentUser.status]} border-2 border-white rounded-full`;
     }
 
     function changeUserStatus() {
@@ -491,16 +510,16 @@
 
         count++;
         group.innerHTML += `
-          <div onclick="openChatWindow('${u.email}', '${u.name}')" class="flex items-center gap-3 p-2 rounded hover:bg-blue-100 cursor-pointer">
-            <div class="relative">
-              <div class="w-9 h-9 rounded bg-sky-300 border border-white flex items-center justify-center font-bold text-white text-xs">
+          <div onclick="openChatWindow('${u.email}', '${u.name}')" class="flex items-center gap-2.5 p-2 rounded hover:bg-blue-100 cursor-pointer">
+            <div class="relative shrink-0">
+              <div class="w-8 h-8 rounded bg-sky-300 border border-white flex items-center justify-center font-bold text-white text-xs">
                 <i class="fa-solid fa-user"></i>
               </div>
-              <span class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border border-white rounded-full"></span>
+              <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border border-white rounded-full"></span>
             </div>
             <div class="flex-1 min-w-0">
               <div class="text-xs font-bold text-slate-800 truncate">${u.name}</div>
-              <div class="text-[11px] text-slate-500 truncate">${u.email}</div>
+              <div class="text-[10px] text-slate-500 truncate">${u.email}</div>
             </div>
           </div>
         `;
@@ -515,17 +534,16 @@
     }
 
 
-    /* ================= DRAG & DROP DE JANELAS ================= */
+    /* ================= DRAG & DROP SUPORTE MOUSE E TOUCH (CELULAR) ================= */
     function makeWindowDraggable(winElement) {
       const titleBar = winElement.querySelector('.msn-titlebar');
       let isDragging = false;
       let startX, startY, initialX, initialY;
 
-      titleBar.addEventListener('mousedown', (e) => {
-        if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+      function startDrag(clientX, clientY) {
         isDragging = true;
-        startX = e.clientX;
-        startY = e.clientY;
+        startX = clientX;
+        startY = clientY;
         
         const rect = winElement.getBoundingClientRect();
         initialX = rect.left;
@@ -533,24 +551,51 @@
 
         winElement.style.position = 'fixed';
         winElement.style.zIndex = ++highestZIndex;
+      }
 
-        document.addEventListener('mousemove', onMouseMove);
-        document.addEventListener('mouseup', onMouseUp);
-      });
-
-      function onMouseMove(e) {
+      function doDrag(clientX, clientY) {
         if (!isDragging) return;
-        const dx = e.clientX - startX;
-        const dy = e.clientY - startY;
+        const dx = clientX - startX;
+        const dy = clientY - startY;
         winElement.style.left = `${initialX + dx}px`;
         winElement.style.top = `${initialY + dy}px`;
       }
 
-      function onMouseUp() {
+      function endDrag() {
         isDragging = false;
-        document.removeEventListener('mousemove', onMouseMove);
-        document.removeEventListener('mouseup', onMouseUp);
       }
+
+      // Mouse Events
+      titleBar.addEventListener('mousedown', (e) => {
+        if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+        startDrag(e.clientX, e.clientY);
+        const onMouseMove = (ev) => doDrag(ev.clientX, ev.clientY);
+        const onMouseUp = () => {
+          endDrag();
+          document.removeEventListener('mousemove', onMouseMove);
+          document.removeEventListener('mouseup', onMouseUp);
+        };
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+      });
+
+      // Touch Events (Celular)
+      titleBar.addEventListener('touchstart', (e) => {
+        if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+        const touch = e.touches[0];
+        startDrag(touch.clientX, touch.clientY);
+        const onTouchMove = (ev) => {
+          const t = ev.touches[0];
+          doDrag(t.clientX, t.clientY);
+        };
+        const onTouchEnd = () => {
+          endDrag();
+          document.removeEventListener('touchmove', onTouchMove);
+          document.removeEventListener('touchend', onTouchEnd);
+        };
+        document.addEventListener('touchmove', onTouchMove, { passive: false });
+        document.addEventListener('touchend', onTouchEnd);
+      }, { passive: true });
     }
 
 
@@ -574,47 +619,51 @@
       const container = document.getElementById('chatWindowsContainer');
       win = document.createElement('div');
       win.id = winId;
-      win.className = "fixed w-[480px] h-[460px] msn-window-border rounded-t-lg rounded-b-sm flex flex-col shadow-2xl resizable-window";
+
+      const isMobile = window.innerWidth < 768;
+      win.className = `fixed ${isMobile ? 'w-full h-full top-0 left-0 rounded-none' : 'w-[420px] h-[440px] rounded-t-lg rounded-b-sm'} msn-window-border flex flex-col shadow-2xl resizable-window`;
       win.style.zIndex = ++highestZIndex;
-      win.style.top = '90px';
-      win.style.left = '120px';
+
+      if (!isMobile) {
+        centerWindow(win);
+      }
 
       win.innerHTML = `
         <div class="msn-titlebar px-2.5 py-1.5 flex items-center justify-between select-none">
-          <div class="flex items-center gap-2 pointer-events-none">
-            <i class="fa-regular fa-comment-dots text-blue-700 text-xs"></i>
-            <span class="font-bold text-xs text-slate-800">Conversa com ${name}</span>
+          <div class="flex items-center gap-1.5 pointer-events-none min-w-0">
+            <i class="fa-regular fa-comment-dots text-blue-700 text-xs shrink-0"></i>
+            <span class="font-bold text-xs text-slate-800 truncate">Conversa com ${name}</span>
           </div>
-          <div class="flex items-center gap-1">
-            <button onclick="minimizeChat('${winId}', '${name}')" class="w-5 h-4 msn-btn text-[9px] font-bold flex items-center justify-center text-slate-700 hover:bg-blue-200">🗕</button>
-            <button onclick="maximizeChat('${winId}')" class="w-5 h-4 msn-btn text-[9px] font-bold flex items-center justify-center text-slate-700 hover:bg-blue-200">🗖</button>
+          <div class="flex items-center gap-1 shrink-0">
+            <button onclick="minimizeChat('${winId}', '${name}')" class="w-5 h-4 msn-btn text-[9px] font-bold flex items-center justify-center text-slate-700">🗕</button>
+            <button onclick="maximizeChat('${winId}')" class="w-5 h-4 msn-btn text-[9px] font-bold flex items-center justify-center text-slate-700">🗖</button>
             <button onclick="document.getElementById('${winId}').remove(); removeDockItem('${winId}');" class="w-5 h-4 bg-red-500 hover:bg-red-600 text-white rounded text-[9px] font-bold flex items-center justify-center ml-1">✕</button>
           </div>
         </div>
 
         <div class="chat-body-content flex flex-col flex-1 overflow-hidden relative bg-white">
-          <div class="p-2.5 bg-gradient-to-r from-blue-100 via-blue-50 to-white border-b border-blue-300 flex items-center justify-between shrink-0">
-            <div class="flex items-center gap-2.5 min-w-0">
-              <div class="w-10 h-10 rounded bg-sky-300 border border-white flex items-center justify-center font-bold text-white shadow">
+          <div class="p-2 bg-gradient-to-r from-blue-100 via-blue-50 to-white border-b border-blue-300 flex items-center justify-between shrink-0">
+            <div class="flex items-center gap-2 min-w-0">
+              <div class="w-8 h-8 rounded bg-sky-300 border border-white flex items-center justify-center font-bold text-white shadow text-xs shrink-0">
                 <i class="fa-solid fa-user"></i>
               </div>
               <div class="min-w-0">
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-1.5">
                   <span class="font-bold text-xs text-slate-800 truncate">${name}</span>
                   <span class="text-[9px] bg-emerald-100 text-emerald-800 border-emerald-300 px-1 rounded border font-bold">Online</span>
                 </div>
-                <p class="text-[11px] text-slate-600 truncate">${email}</p>
+                <p class="text-[10px] text-slate-600 truncate">${email}</p>
               </div>
             </div>
           </div>
 
-          <div id="${winId}_log" class="flex-1 p-3 overflow-y-auto space-y-2.5 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:16px_16px]">
+          <div id="${winId}_log" class="flex-1 p-2.5 overflow-y-auto space-y-2 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:16px_16px]">
             <div class="text-center text-[10px] text-gray-400">--- Conversa iniciada com ${name} ---</div>
           </div>
 
           <!-- Barra de Ferramentas Chat -->
           <div class="flex flex-col shrink-0">
-            <div class="px-2 py-1 bg-slate-100 border-t border-slate-200 flex items-center gap-2 text-xs">
+            <div class="px-2 py-1 bg-slate-100 border-t border-slate-200 flex items-center gap-1.5 text-xs flex-wrap">
               <button id="${winId}_boldBtn" onclick="toggleBold('${winId}')" class="msn-btn px-1.5 py-0.5 rounded font-bold">A<b>B</b></button>
               <button id="${winId}_italicBtn" onclick="toggleItalic('${winId}')" class="msn-btn px-1.5 py-0.5 rounded italic"><i>I</i></button>
               <div class="h-4 w-px bg-slate-300"></div>
@@ -636,26 +685,26 @@
 
               <!-- Winks -->
               <div class="relative">
-                <button onclick="toggleWinkMenu('${winId}')" class="msn-btn px-2 py-0.5 rounded text-[11px] font-bold text-purple-900 flex items-center gap-1">
+                <button onclick="toggleWinkMenu('${winId}')" class="msn-btn px-1.5 py-0.5 rounded text-[11px] font-bold text-purple-900 flex items-center gap-1">
                   <i class="fa-solid fa-wand-magic-sparkles text-purple-600"></i>
                   <span>Wink</span>
                   <i class="fa-solid fa-caret-down text-[9px]"></i>
                 </button>
-                <div id="${winId}_winkMenu" class="hidden absolute bottom-7 left-0 bg-white border border-slate-300 shadow-xl rounded p-1.5 flex flex-col gap-1 z-50 w-40 text-slate-800">
+                <div id="${winId}_winkMenu" class="hidden absolute bottom-7 left-0 bg-white border border-slate-300 shadow-xl rounded p-1.5 flex flex-col gap-1 z-50 w-36 text-slate-800 text-xs">
                   <button onclick="sendWink('${winId}', '${email}', '💋 Beijo Wink')" class="hover:bg-blue-100 px-2 py-1 rounded text-left">💋 Beijo Wink</button>
                   <button onclick="sendWink('${winId}', '${email}', '🧸 Ursinho')" class="hover:bg-blue-100 px-2 py-1 rounded text-left">🧸 Ursinho</button>
                 </div>
               </div>
 
-              <button onclick="triggerNudge('${winId}', '${email}')" class="msn-btn px-2 py-0.5 rounded text-[11px] font-bold text-amber-800 flex items-center gap-1 ml-auto">
+              <button onclick="triggerNudge('${winId}', '${email}')" class="msn-btn px-1.5 py-0.5 rounded text-[10px] font-bold text-amber-800 flex items-center gap-1 ml-auto">
                 <i class="fa-solid fa-hand-pointer text-amber-600"></i>
-                <span>Chamar Atenção</span>
+                <span>Nudge</span>
               </button>
             </div>
 
-            <div class="p-2 bg-slate-50 border-t border-slate-200 flex gap-2 items-end">
+            <div class="p-2 bg-slate-50 border-t border-slate-200 flex gap-1.5 items-end">
               <textarea id="${winId}_input" rows="2" placeholder="Digite uma mensagem..." oninput="updateInputStyle('${winId}')" onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault(); submitMessage('${email}', '${winId}');}" class="flex-1 p-2 border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 text-xs resize-none shadow-inner"></textarea>
-              <button onclick="submitMessage('${email}', '${winId}')" class="msn-btn px-4 py-3 rounded font-bold text-xs text-blue-900 shadow">Enviar</button>
+              <button onclick="submitMessage('${email}', '${winId}')" class="msn-btn px-3 py-2.5 rounded font-bold text-xs text-blue-900 shadow shrink-0">Enviar</button>
             </div>
           </div>
         </div>
@@ -664,7 +713,10 @@
       container.appendChild(win);
       makeWindowDraggable(win);
       win.addEventListener('mousedown', () => { win.style.zIndex = ++highestZIndex; });
-      document.getElementById(winId + '_input').focus();
+      win.addEventListener('touchstart', () => { win.style.zIndex = ++highestZIndex; }, { passive: true });
+      
+      const inputElem = document.getElementById(winId + '_input');
+      if (inputElem && !isMobile) inputElem.focus();
     }
 
     /* Controle de Minimizar e Maximizar */
@@ -677,10 +729,9 @@
     function maximizeChat(winId) {
       const win = document.getElementById(winId);
       if (win.style.width === '100vw') {
-        win.style.width = '480px';
-        win.style.height = '460px';
-        win.style.top = '100px';
-        win.style.left = '120px';
+        win.style.width = '420px';
+        win.style.height = '440px';
+        centerWindow(win);
       } else {
         win.style.width = '100vw';
         win.style.height = '100vh';
@@ -702,7 +753,8 @@
         win.classList.remove('hidden');
         win.style.zIndex = ++highestZIndex;
         item.remove();
-        document.getElementById(winId + '_input').focus();
+        const input = document.getElementById(winId + '_input');
+        if (input && window.innerWidth >= 768) input.focus();
       };
       dock.appendChild(item);
     }
@@ -809,7 +861,7 @@
       });
     }
 
-    /* Evento em Tempo Real Otimizado */
+    /* Evento em Tempo Real */
     socket.on('receive_message', (data) => {
       if (currentUser && (data.receiverEmail === currentUser.email || data.senderEmail === currentUser.email)) {
         const otherEmail = data.senderEmail === currentUser.email ? data.receiverEmail : data.senderEmail;
