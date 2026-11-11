@@ -116,14 +116,13 @@
       animation: nudgeShake 0.55s ease-in-out infinite;
     }
 
-    /* Animação gigante e fluida do Wink */
     @keyframes giantWinkAnim {
-      0% { transform: scale(0.1) rotate(-30deg); opacity: 0; filter: blur(12px); }
-      20% { transform: scale(1.4) rotate(10deg); opacity: 1; filter: blur(0px); }
+      0% { transform: scale(0.1) rotate(-30deg); opacity: 0; }
+      20% { transform: scale(1.4) rotate(10deg); opacity: 1; }
       40% { transform: scale(1.1) rotate(-5deg); opacity: 1; }
       70% { transform: scale(1.25) rotate(5deg); opacity: 1; }
       85% { transform: scale(1) rotate(0deg); opacity: 1; }
-      100% { transform: scale(0.5) rotate(0deg); opacity: 0; filter: blur(10px); }
+      100% { transform: scale(0.5) rotate(0deg); opacity: 0; }
     }
 
     .giant-wink-popup {
@@ -144,10 +143,10 @@
   <!-- DOCK DE JANELAS MINIMIZADAS -->
   <div id="minimizedDock" class="absolute bottom-2 left-2 flex flex-col gap-1.5 z-50 pointer-events-auto"></div>
 
-  <!-- CAMADA GLOBAL ABSOLUTA PARA O WINK GIGANTE (COBRE TELA INTEIRA) -->
+  <!-- CAMADA GLOBAL ABSOLUTA PARA O WINK GIGANTE -->
   <div id="globalWinkOverlay" class="fixed inset-0 pointer-events-none z-[999999] flex items-center justify-center"></div>
 
-  <!-- ================= 1. AUTH WINDOW (LOGIN & CADASTRO) ================= -->
+  <!-- ================= 1. AUTH WINDOW ================= -->
   <div id="authWindow" class="msn-window-border auth-window-size rounded-t-lg rounded-b-sm flex flex-col shadow-2xl z-45">
     <div class="msn-titlebar px-3 py-2 flex items-center justify-between" id="authTitleBar">
       <div class="flex items-center gap-2 pointer-events-none">
@@ -244,7 +243,7 @@
   </div>
 
 
-  <!-- ================= 2. MAIN MESSENGER WINDOW (TELA CHEIA FIXA) ================= -->
+  <!-- ================= 2. MAIN MESSENGER WINDOW ================= -->
   <div id="mainWindow" class="hidden msn-window-border fullscreen-main-window flex flex-col shadow-2xl z-40">
     <div class="msn-titlebar px-4 py-2.5 flex items-center justify-between">
       <div class="flex items-center gap-2">
@@ -946,7 +945,7 @@
       });
     }
 
-    /* Função principal do Wink Gigante */
+    /* Função principal para renderizar o Wink Gigante na tela */
     function playGiantWink(emojiChar, senderName) {
       const overlay = document.getElementById('globalWinkOverlay');
       if (!overlay) return;
@@ -1002,7 +1001,7 @@
             }
           }
 
-          // AQUI ESTAVA O PROBLEMA: Garante que o Wink gigante disparue para quem recebe
+          // Dispara o Wink Gigante na tela de quem recebeu
           if (data.isWink && data.senderEmail !== currentUser.email) {
             playGiantWink(data.winkEmoji, data.senderName);
           }
