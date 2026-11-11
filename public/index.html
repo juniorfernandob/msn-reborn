@@ -116,7 +116,6 @@
       animation: nudgeShake 0.55s ease-in-out infinite;
     }
 
-    /* Animação longa, gigante e imersiva para o Wink na tela inteira */
     @keyframes immersiveWink {
       0% { transform: scale(0.1) rotate(-30deg); opacity: 0; filter: blur(10px); }
       20% { transform: scale(1.3) rotate(10deg); opacity: 1; filter: blur(0px); }
@@ -549,6 +548,7 @@
         const dotColor = statusColors[u.status] || 'bg-emerald-500';
         const subnickText = u.subnick ? ` - <span class="text-slate-500 font-normal">${u.subnick}</span>` : '';
 
+        // CORREÇÃO: Adicionado o onclick correto com o email e o nome do contato
         group.innerHTML += `
           <div onclick="openChatWindow('${u.email}', '${u.name}')" class="flex items-center gap-3 p-2.5 rounded hover:bg-blue-100 cursor-pointer">
             <div class="relative shrink-0">
@@ -571,7 +571,7 @@
     }
 
 
-    /* ================= JANELA DE LOGIN ARRASTÁVEL ================= -->
+    /* ================= JANELA DE LOGIN ARRASTÁVEL ================= */
     function makeWindowDraggable(winElement) {
       const titleBar = winElement.querySelector('.msn-titlebar');
       let isDragging = false;
@@ -610,7 +610,7 @@
     });
 
 
-    /* ================= JANELAS DE CHAT COM LIMITE DE TELA E ESC ================= -->
+    /* ================= JANELAS DE CHAT COM LIMITE DE TELA E ESC ================= */
     function makeChatDraggable(winElement) {
       const titleBar = winElement.querySelector('.msn-titlebar');
       let isDragging = false;
@@ -751,7 +751,7 @@
                 </div>
               </div>
 
-              <!-- Winks Limpos no Chat e Gigantes na Tela Inteira -->
+              <!-- Winks -->
               <div class="relative">
                 <button onclick="toggleWinkMenu('${winId}')" class="msn-btn px-1.5 py-0.5 rounded text-[11px] font-bold text-purple-900 flex items-center gap-1">
                   <i class="fa-solid fa-wand-magic-sparkles text-purple-600"></i>
@@ -900,13 +900,11 @@
       input.value = '';
     }
 
-    /* Função para disparar o Wink: aviso limpo no chat e animação gigante na tela do amigo */
     function sendWink(winId, receiverEmail, winkName, emojiChar) {
       document.getElementById(winId + '_winkMenu').classList.add('hidden');
       const now = new Date();
       const time = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 
-      // Mensagem limpa e discreta no histórico do chat
       const chatNotice = `<span class="italic text-purple-700">✨ Enviou um Wink (${winkName})</span>`;
 
       socket.emit('send_message', {
@@ -940,7 +938,6 @@
       });
     }
 
-    /* Executa o efeito visual gigante de Wink na tela inteira */
     function playImmersiveWink(emojiChar, senderName) {
       const container = document.getElementById('winkOverlayContainer');
       
@@ -953,7 +950,6 @@
       
       container.appendChild(winkBox);
 
-      // Toca um som nostálgico de efeito especial
       initAudio();
       const now = audioCtx.currentTime;
       const osc = audioCtx.createOscillator();
@@ -966,13 +962,11 @@
       osc.connect(gain); gain.connect(audioCtx.destination);
       osc.start(now); osc.stop(now + 2.0);
 
-      // Remove o elemento após a animação de 4 segundos terminar
       setTimeout(() => {
         winkBox.remove();
       }, 4000);
     }
 
-    /* Evento em Tempo Real */
     socket.on('receive_message', (data) => {
       if (currentUser && (data.receiverEmail === currentUser.email || data.senderEmail === currentUser.email)) {
         const otherEmail = data.senderEmail === currentUser.email ? data.receiverEmail : data.senderEmail;
@@ -996,7 +990,6 @@
             }
           }
 
-          // Se for Wink e veio do outro usuário, dispara a animação gigante na tela dele
           if (data.isWink && data.senderEmail !== currentUser.email) {
             playImmersiveWink(data.winkEmoji, data.senderName);
           }
