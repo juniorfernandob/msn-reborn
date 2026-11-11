@@ -290,16 +290,30 @@
     const chatStyles = {};
     let highestZIndex = 100;
 
-    /* Centralizar janela na tela ao abrir (responsivo mobile/desktop) */
-    function centerWindow(winElement) {
-      const w = winElement.offsetWidth || 360;
-      const h = winElement.offsetHeight || 420;
+    function centerWindow(winElement, width, height) {
+      winElement.style.width = width;
+      winElement.style.height = height;
+      const w = winElement.offsetWidth || parseInt(width);
+      const h = winElement.offsetHeight || parseInt(height);
       const x = Math.max(10, (window.innerWidth - w) / 2);
       const y = Math.max(10, (window.innerHeight - h) / 2);
       winElement.style.position = 'fixed';
       winElement.style.left = `${x}px`;
       winElement.style.top = `${y}px`;
     }
+
+    /* Centralizar janela de login logo ao carregar */
+    window.addEventListener('DOMContentLoaded', () => {
+      const authWin = document.getElementById('authWindow');
+      if (window.innerWidth >= 768) {
+        authWin.style.width = '320px';
+        centerWindow(authWin, '320px', '460px');
+      } else {
+        authWin.style.width = '92vw';
+        centerWindow(authWin, '92vw', '440px');
+      }
+      makeWindowDraggable(authWin);
+    });
 
     /* Audio Synth */
     const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -445,9 +459,7 @@
           mainWin.style.top = '0px';
           mainWin.style.left = '0px';
         } else {
-          mainWin.style.width = '360px';
-          mainWin.style.height = '520px';
-          centerWindow(mainWin);
+          centerWindow(mainWin, '320px', '540px');
         }
 
         document.getElementById('windowUserTitle').innerText = currentUser.name;
@@ -534,7 +546,7 @@
     }
 
 
-    /* ================= DRAG & DROP SUPORTE MOUSE E TOUCH (CELULAR) ================= */
+    /* ================= DRAG & DROP SUPORTE MOUSE E TOUCH ================= */
     function makeWindowDraggable(winElement) {
       const titleBar = winElement.querySelector('.msn-titlebar');
       let isDragging = false;
@@ -621,11 +633,11 @@
       win.id = winId;
 
       const isMobile = window.innerWidth < 768;
-      win.className = `fixed ${isMobile ? 'w-full h-full top-0 left-0 rounded-none' : 'w-[420px] h-[440px] rounded-t-lg rounded-b-sm'} msn-window-border flex flex-col shadow-2xl resizable-window`;
+      win.className = `fixed ${isMobile ? 'w-full h-full top-0 left-0 rounded-none' : 'rounded-t-lg rounded-b-sm'} msn-window-border flex flex-col shadow-2xl resizable-window`;
       win.style.zIndex = ++highestZIndex;
 
       if (!isMobile) {
-        centerWindow(win);
+        centerWindow(win, '420px', '440px');
       }
 
       win.innerHTML = `
@@ -729,9 +741,7 @@
     function maximizeChat(winId) {
       const win = document.getElementById(winId);
       if (win.style.width === '100vw') {
-        win.style.width = '420px';
-        win.style.height = '440px';
-        centerWindow(win);
+        centerWindow(win, '420px', '440px');
       } else {
         win.style.width = '100vw';
         win.style.height = '100vh';
