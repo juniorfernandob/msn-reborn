@@ -111,17 +111,15 @@
       animation: nudgeShake 0.5s ease-in-out;
     }
 
-    /* Animação do Wink Gigante pré-estruturado */
-    @keyframes showWinkAnim {
-      0% { transform: scale(0.1) rotate(-20deg); opacity: 0; }
-      25% { transform: scale(1.3) rotate(8deg); opacity: 1; }
-      50% { transform: scale(1) rotate(-3deg); opacity: 1; }
-      80% { transform: scale(1.1) rotate(3deg); opacity: 1; }
-      100% { transform: scale(0.2) rotate(0deg); opacity: 0; }
+    /* Animação limpa e direta do Wink Gigante */
+    @keyframes popWink {
+      0% { transform: scale(0.1); opacity: 0; }
+      50% { transform: scale(1.2); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
     }
 
-    .animate-wink {
-      animation: showWinkAnim 4s ease-in-out forwards;
+    .popup-anim {
+      animation: popWink 0.3s ease-out forwards;
     }
 
     ::-webkit-scrollbar { width: 10px; height: 10px; }
@@ -138,11 +136,11 @@
   <!-- DOCK DE JANELAS MINIMIZADAS -->
   <div id="minimizedDock" class="absolute bottom-2 left-2 flex flex-col gap-1.5 z-50 pointer-events-auto"></div>
 
-  <!-- ELEMENTO FIXO DO WINK GIGANTE (JÁ EXISTE NO DOM, APENAS OCULTO POR PADRÃO) -->
-  <div id="globalWinkOverlay" class="fixed inset-0 pointer-events-none z-[999999] flex items-center justify-center hidden bg-black/80 backdrop-blur-sm">
-    <div id="winkCard" class="flex flex-col items-center justify-center p-12 rounded-3xl border-4 border-purple-400 bg-purple-950/90 shadow-2xl">
-      <span id="winkEmojiDisplay" class="text-[130px] mb-4 drop-shadow-2xl">💋</span>
-      <span id="winkTextDisplay" class="text-white font-bold text-2xl px-6 py-2 rounded-full bg-purple-900 border border-purple-300 shadow-lg text-center">Contato enviou um Wink!</span>
+  <!-- TELA CHEIA DO WINK (BLOQUEIA A TELA INTEIRA COM O EMOJI GIGANTE) -->
+  <div id="forcedWinkScreen" class="fixed inset-0 z-[999999] hidden flex items-center justify-center bg-black/85 backdrop-blur-md">
+    <div class="popup-anim flex flex-col items-center justify-center p-12 rounded-3xl border-4 border-purple-400 bg-purple-950 shadow-2xl">
+      <div id="forcedWinkEmoji" class="text-[150px] mb-4 drop-shadow-2xl">💋</div>
+      <div id="forcedWinkText" class="text-white font-bold text-3xl px-8 py-3 rounded-full bg-purple-900 border-2 border-purple-300 shadow-xl text-center">Fulano enviou um Wink!</div>
     </div>
   </div>
 
@@ -317,7 +315,6 @@
     let allOnlineUsers = [];
     const chatStyles = {};
     let highestZIndex = 100;
-    let winkTimeout = null;
 
     /* Audio Synth */
     const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -915,6 +912,7 @@
 
       const chatNotice = `<span class="italic text-purple-700 font-bold">✨ Enviou um Wink (${winkName})</span>`;
 
+      // ENVIANDO COM A FLAG CLARA 'isWink: true'
       socket.emit('send_message', {
         senderEmail: currentUser.email,
         senderName: currentUser.name,
@@ -946,45 +944,38 @@
       });
     }
 
-    /* SISTEMA BLINDADO DO WINK GIGANTE (USANDO ELEMENTO PRÉ-EXISTENTE NO DOM) */
-    function playGiantWink(emojiChar, senderName) {
-      const overlay = document.getElementById('globalWinkOverlay');
-      const card = document.getElementById('winkCard');
-      const emojiDisplay = document.getElementById('winkEmojiDisplay');
-      const textDisplay = document.getElementById('winkTextDisplay');
+    /* EXIBIÇÃO DIRETA E FORÇADA DO WINK NA TELA */
+    function displayForcedWink(emojiChar, senderName) {
+      const screen = document.getElementById('forcedWinkScreen');
+      const emojiEl = document.getElementById('forcedWinkEmoji');
+      const textEl = document.getElementById('forcedWinkText');
 
-      if (!overlay || !card) return;
+      if (!screen) return;
 
-      // Define os textos e emojis
-      emojiDisplay.innerText = emojiChar;
-      textDisplay.innerText = `${senderName} enviou um Wink!`;
+      emojiEl.innerText = emojiChar;
+      textEl.innerText = `${senderName} enviou um Wink!`;
 
-      // Limpa animação anterior se houver
-      card.classList.remove('animate-wink');
-      void card.offsetWidth; // força reflow
+      // Mostra a tela inteira com o Wink
+      screen.classList.remove('hidden');
 
-      // Mostra o overlay e dispara a animação
-      overlay.classList.remove('hidden');
-      card.classList.add('animate-wink');
-
+      // Toca som se possível
       try {
         initAudio();
         const now = audioCtx.currentTime;
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(350, now);
-        osc.frequency.exponentialRampToValueAtTime(900, now + 1.5);
-        gain.gain.setValueAtTime(0.25, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 2.2);
+        osc.frequency.setValueAtTime(400, now);
+        osc.frequency.exponentialRampToValueAtTime(800, now + 1);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
         osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.start(now); osc.stop(now + 2.2);
+        osc.start(now); osc.stop(now + 1.5);
       } catch(e) {}
 
-      if (winkTimeout) clearTimeout(winkTimeout);
-      winkTimeout = setTimeout(() => {
-        overlay.classList.add('hidden');
-        card.classList.remove('animate-wink');
+      // Some sozinho após 4 segundos
+      setTimeout(() => {
+        screen.classList.add('hidden');
       }, 4000);
     }
 
@@ -1011,9 +1002,9 @@
             }
           }
 
-          // GARANTIDO: Dispara o Wink na tela de quem recebeu
-          if (data.isWink && data.senderEmail !== currentUser.email) {
-            playGiantWink(data.winkEmoji, data.senderName);
+          // AQUI É O GATILHO: Qualquer mensagem recebida que tenha isWink: true vai abrir a tela cheia
+          if (data.isWink === true) {
+            displayForcedWink(data.winkEmoji, data.senderName);
           }
 
           const isMe = data.senderEmail === currentUser.email;

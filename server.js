@@ -67,18 +67,25 @@ io.on('connection', (socket) => {
   });
 
   // Envio de mensagens em tempo real entre salas/usuários
-  socket.on('send_message', (data) => {
-    const { senderEmail, receiverEmail, text, time, style, isNudge } = data;
+socket.on('send_message', (data) => {
+  const { senderEmail, receiverEmail, text, time, style, isNudge, isWink, winkEmoji, winkName } = data;
 
-    const messagePayload = {
-      senderEmail,
-      senderName: data.senderName,
-      receiverEmail,
-      text,
-      time,
-      style,
-      isNudge
-    };
+  const messagePayload = {
+    senderEmail,
+    senderName: data.senderName,
+    receiverEmail,
+    text,
+    time,
+    style,
+    isNudge,
+    isWink,
+    winkEmoji,
+    winkName
+  };
+
+  io.to(receiverEmail).emit('receive_message', messagePayload);
+  io.to(senderEmail).emit('receive_message', messagePayload);
+});
 
     // Envia para a sala do destinatário e para a sala do remetente (para sincronizar as janelas)
     io.to(receiverEmail).to(senderEmail).emit('receive_message', messagePayload);
