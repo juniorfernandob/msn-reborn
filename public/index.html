@@ -435,8 +435,6 @@
         currentUser.status = document.getElementById('loginInitialStatus').value;
         currentUser.subnick = document.getElementById('mainUserSubnick').value;
 
-        socket.emit('join_room', currentUser.email);
-
         document.getElementById('authWindow').classList.add('hidden');
         const mainWin = document.getElementById('mainWindow');
         mainWin.classList.remove('hidden');
@@ -446,7 +444,7 @@
         document.getElementById('mainStatusSelect').value = currentUser.status;
         updateStatusDot();
         playLoginSound();
-        updateProfileInfo();
+        broadcastProfile();
       } else {
         document.getElementById('loginErrorMsg').innerText = res.message;
         document.getElementById('loginErrorAlert').classList.remove('hidden');

@@ -1,95 +1,98 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// Servir arquivos estáticos da pasta public
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static('public'));
 
-// Banco de Dados SQLite em arquivo local
-const dbPath = path.resolve(__dirname, 'msn_database.db');
-const db = new sqlite3.Database(dbPath, (err) => {
-  if (err) console.error('Erro ao conectar ao SQLite:', err.message);
-  else console.log('📦 Conectado ao banco de dados SQLite com sucesso!');
-});
-
-// Criar tabela de usuários
-db.run(`CREATE TABLE IF NOT EXISTS users (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT,
-  email TEXT UNIQUE,
-  password TEXT,
-  status TEXT DEFAULT 'online'
-)`);
-
-// Armazenar usuários conectados por socket.id
-const onlineUsers = {};
+// Simulação de banco de dados em memória
+const usersDB = [];
+const connectedUsers = new Map(); // socket.id -> dados do usuário
 
 io.on('connection', (socket) => {
-  console.log('🔌 Novo usuário conectado:', socket.id);
+  console.log('Novo usuário conectado:', socket.id);
 
-  socket.on('update_profile', (data) => {
-    const user = connectedUsers.get(socket.id);
-    if (user) {
-      user.name = data.name || user.name;
-      user.status = data.status || user.status;
-      user.subnick = data.subnick !== undefined ? data.subnick : user.subnick;
-      user.avatar = data.avatar || user.avatar;
-      
-      const userList = Array.from(connectedUsers.values());
-      io.emit('update_contact_list', userList);
+  // Cadastro de nova conta
+  socket.on('register', (data) => {
+    const { name, email, password } = data;
+    const exists = usersDB.find(u => u.email === email);
+    if (exists) {
+      socket.emit('register_response', { success: false, message: 'Este e-mail já está cadastrado!' });
+    } else {
+      usersDB.push({ name, email, password });
+      socket.emit('register_response', { success: true });
     }
   });
 
-  // Cadastro de Conta
-  socket.on('register', (data) => {
-    const { name, email, password } = data;
-    const query = `INSERT INTO users (name, email, password) VALUES (?, ?, ?)`;
-    db.run(query, [name, email, password], function(err) {
-      if (err) {
-        socket.emit('register_response', { success: false, message: 'Este e-mail já está cadastrado no banco de dados!' });
-      } else {
-        socket.emit('register_response', { success: true, userId: this.lastID });
-      }
-    });
-  });
-
-  // Login de Usuário
+  // Login
   socket.on('login', (data) => {
     const { email, password, status } = data;
-    const query = `SELECT * FROM users WHERE email = ? AND password = ?`;
-    db.get(query, [email, password], (err, row) => {
-      if (row) {
-        onlineUsers[socket.id] = { id: row.id, name: row.name, email: row.email, status: status || 'online' };
-        socket.emit('login_response', { success: true, user: row });
-        io.emit('update_contact_list', Object.values(onlineUsers));
-      } else {
-        socket.emit('login_response', { success: false, message: 'E-mail ou senha incorretos!' });
-      }
-    });
+    const user = usersDB.find(u => u.email === email && u.password === password);
+    if (user) {
+      const userData = {
+        name: user.name,
+        email: user.email,
+        status: status || 'online',
+        subnick: '',
+        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'
+      };
+
+      connectedUsers.set(socket.id, userData);
+      socket.join(email); // Entra na sua própria sala privada
+
+      socket.emit('login_response', { success: true, user: userData });
+
+      // Atualiza a lista para todos
+      io.emit('update_contact_list', Array.from(connectedUsers.values()));
+    } else {
+      socket.emit('login_response', { success: false, message: 'E-mail ou senha incorretos!' });
+    }
   });
 
-  // Envio de Mensagem em Tempo Real para um contato específico
+  // Atualização de Perfil (Status, Nome, Subnick, Avatar) em tempo real
+  socket.on('update_profile', (data) => {
+    const user = connectedUsers.get(socket.id);
+    if (user) {
+      user.name = data.name !== undefined ? data.name : user.name;
+      user.status = data.status !== undefined ? data.status : user.status;
+      user.subnick = data.subnick !== undefined ? data.subnick : user.subnick;
+      user.avatar = data.avatar !== undefined ? data.avatar : user.avatar;
+
+      // Envia a lista atualizada para absolutamente todos os conectados instantaneamente
+      io.emit('update_contact_list', Array.from(connectedUsers.values()));
+    }
+  });
+
+  // Envio de mensagens em tempo real entre salas/usuários
   socket.on('send_message', (data) => {
-    // data: { senderEmail, receiverEmail, text, time, style }
-    // Envia a mensagem para todos os sockets conectados (o cliente filtra se é para ele)
-    io.emit('receive_message', data);
+    const { senderEmail, receiverEmail, text, time, style, isNudge } = data;
+
+    const messagePayload = {
+      senderEmail,
+      senderName: data.senderName,
+      receiverEmail,
+      text,
+      time,
+      style,
+      isNudge
+    };
+
+    // Envia para a sala do destinatário e para a sala do remetente (para sincronizar as janelas)
+    io.to(receiverEmail).to(senderEmail).emit('receive_message', messagePayload);
   });
 
   // Desconexão
   socket.on('disconnect', () => {
-    delete onlineUsers[socket.id];
-    io.emit('update_contact_list', Object.values(onlineUsers));
-    console.log('❌ Usuário desconectado:', socket.id);
+    console.log('Usuário desconectado:', socket.id);
+    connectedUsers.delete(socket.id);
+    io.emit('update_contact_list', Array.from(connectedUsers.values()));
   });
 });
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`🚀 Servidor MSN rodando na porta ${PORT}`);
+  console.log(`Servidor rodando na porta ${PORT}`);
 });
