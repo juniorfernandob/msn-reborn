@@ -1,0 +1,14 @@
+{
+  "name": "msn-reborn",
+  "version": "1.0.0",
+  "description": "MSN Messenger 7.5 Real-Time with Node.js & Socket.io",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.7.2",
+    "sqlite3": "^5.1.7"
+  }
+}

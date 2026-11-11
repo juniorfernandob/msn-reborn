@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MSN Messenger 7.5 - Reborn (Online)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Tahoma:wght@400;700&display=swap');
+
+    body {
+      font-family: Tahoma, 'Segoe UI', Geneva, Verdana, sans-serif;
+      user-select: none;
+      background: radial-gradient(circle at center, #1e528e 0%, #092748 100%);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      margin: 0;
+    }
+
+    .msn-window-border {
+      background: linear-gradient(180deg, #cbe3f9 0%, #a4cdfa 12%, #6bb1f8 35%, #3080db 100%);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.8);
+      border: 1px solid #164677;
+    }
+
+    .msn-titlebar {
+      background: linear-gradient(180deg, #e3f0fb 0%, #badaf6 45%, #92c4f4 50%, #b0d5f7 100%);
+      border-bottom: 1px solid #5a94d0;
+      cursor: default;
+    }
+
+    .msn-btn {
+      background: linear-gradient(180deg, #ffffff 0%, #e3edf7 50%, #c1d9f2 100%);
+      border: 1px solid #6b9ecf;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 1px 2px rgba(0,0,0,0.15);
+      transition: all 0.1s ease;
+    }
+
+    .msn-btn:hover {
+      background: linear-gradient(180deg, #ffffff 0%, #edf4fc 50%, #d4e6f9 100%);
+      border-color: #3b7bb5;
+      box-shadow: 0 0 4px rgba(59, 130, 246, 0.4);
+    }
+
+    .msn-btn:active {
+      background: linear-gradient(180deg, #b5d3f2 0%, #9bc2ec 100%);
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+    }
+
+    .btn-active {
+      background: linear-gradient(180deg, #9bc2ec 0%, #b5d3f2 100%) !important;
+      border-color: #316ac5 !important;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.2) !important;
+    }
+
+    .minimized-dock-item {
+      background: linear-gradient(180deg, #e3f0fb 0%, #badaf6 45%, #92c4f4 50%, #b0d5f7 100%);
+      border: 1px solid #164677;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.8);
+      font-size: 11px;
+      font-family: Tahoma, sans-serif;
+      border-radius: 3px;
+      padding: 4px 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      width: 180px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: #092748;
+      font-weight: bold;
+    }
+
+    .resizable-window {
+      resize: both;
+      overflow: hidden;
+      min-width: 320px;
+      min-height: 380px;
+    }
+
+    @keyframes nudgeShake {
+      0% { transform: translate(0, 0) rotate(0deg); }
+      10% { transform: translate(-14px, -10px) rotate(-1.5deg); }
+      20% { transform: translate(14px, 10px) rotate(1.5deg); }
+      30% { transform: translate(-12px, 12px) rotate(-1deg); }
+      40% { transform: translate(12px, -8px) rotate(1deg); }
+      50% { transform: translate(-8px, 8px) rotate(-0.5deg); }
+      60% { transform: translate(8px, -6px) rotate(0.5deg); }
+      70% { transform: translate(-4px, 4px) rotate(0); }
+      80% { transform: translate(4px, -2px) rotate(0); }
+      90% { transform: translate(-2px, 2px) rotate(0); }
+      100% { transform: translate(0, 0) rotate(0); }
+    }
+
+    .shake {
+      animation: nudgeShake 0.55s ease-in-out infinite;
+    }
+
+    ::-webkit-scrollbar { width: 14px; height: 14px; }
+    ::-webkit-scrollbar-track { background: #f0f4f8; border-left: 1px solid #c0d0e0; }
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, #dce8f5 0%, #a2c4e8 100%);
+      border: 1px solid #6392c4;
+      border-radius: 2px;
+    }
+  </style>
+</head>
+<body class="flex items-center justify-center p-2 relative overflow-hidden h-screen w-screen">
+
+  <!-- DOCK DE JANELAS MINIMIZADAS -->
+  <div id="minimizedDock" class="absolute bottom-3 left-3 flex flex-col gap-1.5 z-50 pointer-events-auto"></div>
+
+  <!-- ================= 1. AUTH WINDOW (LOGIN & CADASTRO) ================= -->
+  <div id="authWindow" class="msn-window-border w-80 min-w-[280px] rounded-t-lg rounded-b-sm flex flex-col shadow-2xl absolute z-45">
+    <div class="msn-titlebar px-3 py-2 flex items-center justify-between">
+      <div class="flex items-center gap-2 pointer-events-none">
+        <svg class="w-4 h-4 text-emerald-600 drop-shadow" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z"/>
+        </svg>
+        <span class="font-bold text-xs text-slate-800">MSN Messenger - Online</span>
+      </div>
+    </div>
+
+    <div class="bg-gradient-to-b from-blue-50/90 via-white to-blue-100/60 p-5 flex flex-col items-center overflow-y-auto flex-1">
+      <div class="relative my-2 flex items-center justify-center">
+        <div class="w-20 h-20 bg-gradient-to-tr from-sky-400 to-emerald-300 rounded-full flex items-center justify-center shadow-lg border-2 border-white">
+          <div class="flex -space-x-2">
+            <i class="fa-solid fa-user-large text-emerald-600 text-3xl drop-shadow"></i>
+            <i class="fa-solid fa-user-large text-sky-600 text-3xl drop-shadow"></i>
+          </div>
+        </div>
+      </div>
+
+      <div class="w-full flex border-b border-blue-300 mb-4 text-xs font-bold text-blue-900">
+        <button id="tabLoginBtn" onclick="switchAuthTab('login')" class="flex-1 py-1.5 text-center bg-white border border-b-0 border-blue-300 rounded-t text-blue-700 shadow-sm">Entrar</button>
+        <button id="tabRegisterBtn" onclick="switchAuthTab('register')" class="flex-1 py-1.5 text-center bg-blue-100/60 hover:bg-white/60 border border-b-0 border-transparent rounded-t text-slate-600">Criar Conta</button>
+      </div>
+
+      <!-- Alerta Sucesso -->
+      <div id="emailConfirmationAlert" class="hidden w-full mb-3 p-2.5 bg-emerald-50 border border-emerald-400 rounded text-[11px] text-emerald-800 shadow-sm">
+        <div class="font-bold flex items-center gap-1 mb-1">
+          <i class="fa-solid fa-envelope-circle-check text-emerald-600 text-sm"></i>
+          <span>Conta criada com sucesso!</span>
+        </div>
+        <p class="leading-tight">Um e-mail de verificação foi enviado. Faça o login abaixo.</p>
+      </div>
+
+      <!-- Alerta Erro Cadastro -->
+      <div id="registerErrorAlert" class="hidden w-full mb-3 p-2.5 bg-red-50 border border-red-400 rounded text-[11px] text-red-800 shadow-sm">
+        <div class="font-bold flex items-center gap-1 mb-0.5">
+          <i class="fa-solid fa-triangle-exclamation text-red-600 text-sm"></i>
+          <span>Erro no Cadastro</span>
+        </div>
+        <p id="registerErrorMsg">Preencha todos os campos corretamente.</p>
+      </div>
+
+      <!-- Alerta Erro Login -->
+      <div id="loginErrorAlert" class="hidden w-full mb-3 p-2.5 bg-red-50 border border-red-400 rounded text-[11px] text-red-800 shadow-sm">
+        <div class="font-bold flex items-center gap-1 mb-0.5">
+          <i class="fa-solid fa-triangle-exclamation text-red-600 text-sm"></i>
+          <span>Erro ao entrar</span>
+        </div>
+        <p id="loginErrorMsg">E-mail ou senha incorretos.</p>
+      </div>
+
+      <!-- Formulário de Login -->
+      <div id="loginForm" class="w-full space-y-3">
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 mb-0.5">Endereço de e-mail:</label>
+          <input type="email" id="loginEmail" placeholder="seu_nome@hotmail.com" class="w-full px-2 py-1 text-xs border border-blue-400 rounded shadow-inner">
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 mb-0.5">Senha:</label>
+          <input type="password" id="loginPassword" class="w-full px-2 py-1 text-xs border border-blue-400 rounded shadow-inner">
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 mb-0.5">Entrar como:</label>
+          <select id="loginInitialStatus" class="w-full px-2 py-1 text-xs border border-blue-400 rounded bg-white cursor-pointer">
+            <option value="online">🟢 Disponível</option>
+            <option value="busy">🔴 Ocupado</option>
+            <option value="away">🟡 Ausente</option>
+            <option value="offline">⚪ Invisível</option>
+          </select>
+        </div>
+        <button onclick="performLogin()" class="w-full msn-btn py-1.5 font-bold text-xs text-blue-900 rounded shadow mt-2">Entrar</button>
+      </div>
+
+      <!-- Formulário de Cadastro -->
+      <div id="registerForm" class="hidden w-full space-y-3">
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 mb-0.5">Nome de exibição (Nick):</label>
+          <input type="text" id="regName" placeholder="Ex: Bruxão Loko" class="w-full px-2 py-1 text-xs border border-blue-400 rounded shadow-inner">
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 mb-0.5">E-mail real para cadastro:</label>
+          <input type="email" id="regEmail" placeholder="usuario@hotmail.com" class="w-full px-2 py-1 text-xs border border-blue-400 rounded shadow-inner">
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 mb-0.5">Senha:</label>
+          <input type="password" id="regPassword" placeholder="••••••••" class="w-full px-2 py-1 text-xs border border-blue-400 rounded shadow-inner">
+        </div>
+        <button onclick="performRegister()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-1.5 font-bold text-xs rounded shadow border border-emerald-800">Cadastrar Conta</button>
+      </div>
+    </div>
+
+    <div class="bg-blue-100 border-t border-blue-300 px-3 py-1 flex justify-between items-center text-[10px] text-slate-600">
+      <span>.NET Messenger Service</span>
+      <span>v7.5.0311</span>
+    </div>
+  </div>
+
+
+  <!-- ================= 2. MAIN MESSENGER WINDOW ================= -->
+  <div id="mainWindow" class="hidden msn-window-border rounded-none flex flex-col shadow-2xl absolute z-40">
+    <div class="msn-titlebar px-3 py-2 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="fa-solid fa-user-group text-emerald-600 text-sm"></i>
+        <span class="font-bold text-xs text-slate-800">MSN Messenger - <span id="windowUserTitle">Bruxão Loko</span></span>
+      </div>
+      <button onclick="performLogout()" class="msn-btn px-2.5 py-0.5 text-xs font-bold text-red-700 flex items-center gap-1 rounded shadow-sm hover:bg-red-50">
+        <i class="fa-solid fa-right-from-bracket"></i> Sair
+      </button>
+    </div>
+
+    <div class="flex flex-col flex-1 overflow-hidden bg-white">
+      <!-- Perfil Superior -->
+      <div class="p-4 bg-gradient-to-b from-blue-100/90 via-blue-50/70 to-slate-100 border-b border-blue-300 flex gap-4 items-center shrink-0">
+        <div class="relative group cursor-pointer" onclick="cycleAvatar()">
+          <img id="mainUserAvatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80" class="w-16 h-16 rounded border-2 border-white shadow object-cover">
+          <div id="mainUserStatusDot" class="absolute bottom-0 right-0 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full"></div>
+        </div>
+
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2">
+            <input type="text" id="mainUserName" value="Bruxão Loko" class="font-bold text-sm text-slate-800 bg-transparent hover:bg-white focus:bg-white rounded px-1.5 py-0.5 w-full truncate border border-transparent focus:border-blue-400">
+            <select id="mainStatusSelect" onchange="changeUserStatus()" class="text-xs bg-white border border-blue-300 rounded px-2 py-1 focus:outline-none cursor-pointer">
+              <option value="online">🟢 Disponível</option>
+              <option value="busy">🔴 Ocupado</option>
+              <option value="away">🟡 Ausente</option>
+              <option value="offline">⚪ Invisível</option>
+            </select>
+          </div>
+
+          <input type="text" id="mainUserSubnick" value="★~* Lⲑkⲑ pⲑr Vⲑcê *~★" class="text-xs text-slate-600 bg-transparent hover:bg-white focus:bg-white rounded px-1.5 py-0.5 w-full truncate border border-transparent focus:border-blue-400 mt-1">
+
+          <div class="mt-1.5 flex items-center gap-1.5 text-xs text-blue-700">
+            <i class="fa-solid fa-music text-[10px] text-blue-500 animate-pulse"></i>
+            <span id="nowPlayingTrack" onclick="cycleTrack()" class="truncate hover:underline cursor-pointer">Linkin Park - In The End</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Barra de Pesquisa -->
+      <div class="p-2.5 bg-slate-100 border-b border-slate-200 shrink-0">
+        <input type="text" placeholder="Procurar contato..." onkeyup="filterContactList(this.value)" class="w-full px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-full focus:outline-none focus:border-blue-400 shadow-inner">
+      </div>
+
+      <!-- Lista de Contatos -->
+      <div class="flex-1 overflow-y-auto p-3 bg-white space-y-2" id="contactContainer">
+        <div>
+          <div class="flex items-center justify-between text-xs font-bold text-slate-700 px-1 py-1.5 border-b border-slate-200 cursor-pointer" onclick="toggleCategory('onlineGroup')">
+            <span><i class="fa-solid fa-caret-down text-slate-500 mr-1"></i> Contatos Online na Rede (<span id="countOnline">0</span>)</span>
+          </div>
+          <div id="onlineGroup" class="mt-1 space-y-1"></div>
+        </div>
+      </div>
+
+      <!-- Rodapé Principal -->
+      <div class="p-2.5 bg-gradient-to-t from-blue-100 to-slate-100 border-t border-blue-300 flex justify-between text-xs text-blue-900 font-bold shrink-0">
+        <button onclick="openAddContactWindow()" class="hover:underline flex items-center gap-1.5"><i class="fa-solid fa-user-plus text-emerald-600"></i> Adicionar</button>
+        <button onclick="playLoginSound()" class="hover:underline flex items-center gap-1.5"><i class="fa-solid fa-volume-high text-blue-600"></i> Testar Som</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTAINER DE CHATS E AUXILIARES -->
+  <div id="chatWindowsContainer"></div>
+
+
+  <!-- ================= SCRIPT & LOGIC ================= -->
+  <script>
+    const socket = io();
+    let currentUser = null;
+    let allOnlineUsers = [];
+    const chatStyles = {};
+    const chatLogs = {};
+    let highestZIndex = 100;
+    const windowStates = {};
+
+    /* Audio Synth */
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+    function initAudio() { if (!audioCtx) audioCtx = new AudioContext(); }
+
+    function playLoginSound() {
+      initAudio();
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(523.25, now);
+      osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.12);
+      osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.24);
+      osc.frequency.exponentialRampToValueAtTime(1046.50, now + 0.4);
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(now); osc.stop(now + 0.6);
+    }
+
+    function playReceiveMsgSound() {
+      initAudio();
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(587.33, now);
+      osc.frequency.setValueAtTime(880.00, now + 0.08);
+      gain.gain.setValueAtTime(0.18, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(now); osc.stop(now + 0.25);
+    }
+
+    function playNudgeSound() {
+      initAudio();
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(160, now);
+      osc.frequency.linearRampToValueAtTime(60, now + 0.45);
+      gain.gain.setValueAtTime(0.3, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(now); osc.stop(now + 0.5);
+    }
+
+    /* Validador de E-mail */
+    function isValidEmail(email) {
+      return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
+    }
+
+    function switchAuthTab(tab) {
+      const loginForm = document.getElementById('loginForm');
+      const regForm = document.getElementById('registerForm');
+      const tabLoginBtn = document.getElementById('tabLoginBtn');
+      const tabRegisterBtn = document.getElementById('tabRegisterBtn');
+      
+      document.getElementById('emailConfirmationAlert').classList.add('hidden');
+      document.getElementById('loginErrorAlert').classList.add('hidden');
+      document.getElementById('registerErrorAlert').classList.add('hidden');
+
+      if (tab === 'login') {
+        loginForm.classList.remove('hidden');
+        regForm.classList.add('hidden');
+        tabLoginBtn.className = "flex-1 py-1.5 text-center bg-white border border-b-0 border-blue-300 rounded-t text-blue-700 shadow-sm";
+        tabRegisterBtn.className = "flex-1 py-1.5 text-center bg-blue-100/60 hover:bg-white/60 border border-b-0 border-transparent rounded-t text-slate-600";
+      } else {
+        loginForm.classList.add('hidden');
+        regForm.classList.remove('hidden');
+        tabRegisterBtn.className = "flex-1 py-1.5 text-center bg-white border border-b-0 border-blue-300 rounded-t text-blue-700 shadow-sm";
+        tabLoginBtn.className = "flex-1 py-1.5 text-center bg-blue-100/60 hover:bg-white/60 border border-b-0 border-transparent rounded-t text-slate-600";
+      }
+    }
+
+    function performRegister() {
+      const name = document.getElementById('regName').value.trim();
+      const email = document.getElementById('regEmail').value.trim();
+      const password = document.getElementById('regPassword').value.trim();
+      const regErrorBox = document.getElementById('registerErrorAlert');
+      const regErrorMsg = document.getElementById('registerErrorMsg');
+
+      regErrorBox.classList.add('hidden');
+
+      if (!name || !email || !password) {
+        regErrorMsg.innerText = 'Preencha todos os campos para se cadastrar.';
+        regErrorBox.classList.remove('hidden');
+        return;
+      }
+      if (!isValidEmail(email)) {
+        regErrorMsg.innerText = 'Insira um e-mail real e válido.';
+        regErrorBox.classList.remove('hidden');
+        return;
+      }
+
+      socket.emit('register', { name, email, password });
+    }
+
+    socket.on('register_response', (res) => {
+      if (res.success) {
+        document.getElementById('emailConfirmationAlert').classList.remove('hidden');
+        switchAuthTab('login');
+      } else {
+        document.getElementById('registerErrorMsg').innerText = res.message;
+        document.getElementById('registerErrorAlert').classList.remove('hidden');
+      }
+    });
+
+    function performLogin() {
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value.trim();
+      const status = document.getElementById('loginInitialStatus').value;
+      const loginErrorBox = document.getElementById('loginErrorAlert');
+      const loginErrorMsg = document.getElementById('loginErrorMsg');
+
+      loginErrorBox.classList.add('hidden');
+
+      if (!email || !password) {
+        loginErrorMsg.innerText = 'Digite o e-mail e a senha.';
+        loginErrorBox.classList.remove('hidden');
+        return;
+      }
+
+      socket.emit('login', { email, password, status });
+    }
+
+    socket.on('login_response', (res) => {
+      if (res.success) {
+        currentUser = res.user;
+        currentUser.status = document.getElementById('loginInitialStatus').value;
+
+        document.getElementById('authWindow').classList.add('hidden');
+        const mainWin = document.getElementById('mainWindow');
+        mainWin.classList.remove('hidden');
+        mainWin.style.position = 'fixed';
+        mainWin.style.top = '0px';
+        mainWin.style.left = '0px';
+        mainWin.style.width = '100vw';
+        mainWin.style.height = '100vh';
+
+        document.getElementById('windowUserTitle').innerText = currentUser.name;
+        document.getElementById('mainUserName').value = currentUser.name;
+        document.getElementById('mainStatusSelect').value = currentUser.status;
+        updateStatusDot();
+        playLoginSound();
+      } else {
+        document.getElementById('loginErrorMsg').innerText = res.message;
+        document.getElementById('loginErrorAlert').classList.remove('hidden');
+      }
+    });
+
+    function performLogout() {
+      location.reload();
+    }
+
+    /* Status & Perfil */
+    function updateStatusDot() {
+      const dot = document.getElementById('mainUserStatusDot');
+      const colors = { online: 'bg-emerald-500', away: 'bg-amber-500', busy: 'bg-red-500', offline: 'bg-gray-400' };
+      dot.className = `absolute bottom-0 right-0 w-4 h-4 ${colors[currentUser.status]} border-2 border-white rounded-full`;
+    }
+
+    function changeUserStatus() {
+      currentUser.status = document.getElementById('mainStatusSelect').value;
+      updateStatusDot();
+    }
+
+    function cycleAvatar() {
+      const avatars = [
+        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+        'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
+        'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=200&q=80'
+      ];
+      const idx = avatars.indexOf(currentUser.avatar || avatars[0]);
+      currentUser.avatar = avatars[(idx + 1) % avatars.length];
+      document.getElementById('mainUserAvatar').src = currentUser.avatar;
+    }
+
+    function cycleTrack() {
+      const tracks = ['Linkin Park - In The End', 'Evanescence - Bring Me To Life', 'Fresno - Desde Quando Você Se Foi', 'Simple Plan - Welcome to My Life'];
+      const elem = document.getElementById('nowPlayingTrack');
+      const idx = tracks.indexOf(elem.innerText);
+      elem.innerText = tracks[(idx + 1) % tracks.length];
+    }
+
+    /* Lista de Contatos */
+    socket.on('update_contact_list', (users) => {
+      allOnlineUsers = users;
+      renderContacts();
+    });
+
+    function renderContacts(filter = '') {
+      const group = document.getElementById('onlineGroup');
+      group.innerHTML = '';
+      let count = 0;
+
+      allOnlineUsers.forEach(u => {
+        if (currentUser && u.email === currentUser.email) return;
+        if (filter && !u.name.toLowerCase().includes(filter.toLowerCase())) return;
+
+        count++;
+        group.innerHTML += `
+          <div onclick="openChatWindow('${u.email}', '${u.name}')" class="flex items-center gap-3 p-2 rounded hover:bg-blue-100 cursor-pointer">
+            <div class="relative">
+              <div class="w-9 h-9 rounded bg-sky-300 border border-white flex items-center justify-center font-bold text-white text-xs">
+                <i class="fa-solid fa-user"></i>
+              </div>
+              <span class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border border-white rounded-full"></span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="text-xs font-bold text-slate-800 truncate">${u.name}</div>
+              <div class="text-[11px] text-slate-500 truncate">${u.email}</div>
+            </div>
+          </div>
+        `;
+      });
+      document.getElementById('countOnline').innerText = count;
+    }
+
+    function filterContactList(val) { renderContacts(val); }
+
+    function openAddContactWindow() {
+      alert('Na versão em rede, os usuários aparecem automaticamente na lista quando entram no sistema!');
+    }
+
+
+    /* ================= JANELAS DE CHAT ================= */
+    function openChatWindow(email, name) {
+      let winId = 'chatWin_' + email.replace(/[@.]/g, '_');
+      let win = document.getElementById(winId);
+
+      if (win) {
+        win.classList.remove('hidden');
+        win.style.zIndex = ++highestZIndex;
+        document.getElementById(winId + '_input').focus();
+        return;
+      }
+
+      if (!chatStyles[winId]) chatStyles[winId] = { bold: false, italic: false };
+
+      const container = document.getElementById('chatWindowsContainer');
+      win = document.createElement('div');
+      win.id = winId;
+      win.className = "fixed w-[480px] h-[460px] msn-window-border rounded-t-lg rounded-b-sm flex flex-col shadow-2xl resizable-window";
+      win.style.zIndex = ++highestZIndex;
+      win.style.top = '100px';
+      win.style.left = '120px';
+
+      win.innerHTML = `
+        <div class="msn-titlebar px-2.5 py-1.5 flex items-center justify-between select-none">
+          <div class="flex items-center gap-2">
+            <i class="fa-regular fa-comment-dots text-blue-700 text-xs"></i>
+            <span class="font-bold text-xs text-slate-800">Conversa com ${name}</span>
+          </div>
+          <div class="flex items-center gap-1">
+            <button onclick="document.getElementById('${winId}').remove()" class="w-5 h-4 bg-red-500 hover:bg-red-600 text-white rounded text-[9px] font-bold flex items-center justify-center">✕</button>
+          </div>
+        </div>
+
+        <div class="flex flex-col flex-1 overflow-hidden relative bg-white">
+          <div class="p-2.5 bg-gradient-to-r from-blue-100 via-blue-50 to-white border-b border-blue-300 flex items-center justify-between shrink-0">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <div class="w-10 h-10 rounded bg-sky-300 border border-white flex items-center justify-center font-bold text-white shadow">
+                <i class="fa-solid fa-user"></i>
+              </div>
+              <div class="min-w-0">
+                <div class="flex items-center gap-2">
+                  <span class="font-bold text-xs text-slate-800 truncate">${name}</span>
+                  <span class="text-[9px] bg-emerald-100 text-emerald-800 border-emerald-300 px-1 rounded border font-bold">Online</span>
+                </div>
+                <p class="text-[11px] text-slate-600 truncate">${email}</p>
+              </div>
+            </div>
+          </div>
+
+          <div id="${winId}_log" class="flex-1 p-3 overflow-y-auto space-y-2.5 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:16px_16px]">
+            <div class="text-center text-[10px] text-gray-400">--- Conversa iniciada com ${name} ---</div>
+          </div>
+
+          <!-- Barra de Ferramentas Chat -->
+          <div class="flex flex-col shrink-0">
+            <div class="px-2 py-1 bg-slate-100 border-t border-slate-200 flex items-center gap-2 text-xs">
+              <button id="${winId}_boldBtn" onclick="toggleBold('${winId}')" class="msn-btn px-1.5 py-0.5 rounded font-bold">A<b>B</b></button>
+              <button id="${winId}_italicBtn" onclick="toggleItalic('${winId}')" class="msn-btn px-1.5 py-0.5 rounded italic"><i>I</i></button>
+              <div class="h-4 w-px bg-slate-300"></div>
+
+              <!-- Emojis -->
+              <div class="relative">
+                <button onclick="toggleEmojiMenu('${winId}')" class="msn-btn p-1 px-1.5 rounded flex items-center gap-1">
+                  <span class="text-amber-500 text-sm leading-none">😊</span>
+                  <i class="fa-solid fa-caret-down text-[9px]"></i>
+                </button>
+                <div id="${winId}_emojiMenu" class="hidden absolute bottom-7 left-0 bg-white border border-slate-300 shadow-xl rounded p-2 grid grid-cols-5 gap-1.5 z-50 w-44">
+                  <button onclick="insertEmoji('${winId}', '😊')" class="hover:bg-blue-100 p-1 rounded text-base">😊</button>
+                  <button onclick="insertEmoji('${winId}', '😂')" class="hover:bg-blue-100 p-1 rounded text-base">😂</button>
+                  <button onclick="insertEmoji('${winId}', '❤️')" class="hover:bg-blue-100 p-1 rounded text-base">❤️</button>
+                  <button onclick="insertEmoji('${winId}', '🔥')" class="hover:bg-blue-100 p-1 rounded text-base">🔥</button>
+                  <button onclick="insertEmoji('${winId}', '👍')" class="hover:bg-blue-100 p-1 rounded text-base">👍</button>
+                </div>
+              </div>
+
+              <!-- Winks -->
+              <div class="relative">
+                <button onclick="toggleWinkMenu('${winId}')" class="msn-btn px-2 py-0.5 rounded text-[11px] font-bold text-purple-900 flex items-center gap-1">
+                  <i class="fa-solid fa-wand-magic-sparkles text-purple-600"></i>
+                  <span>Wink</span>
+                  <i class="fa-solid fa-caret-down text-[9px]"></i>
+                </button>
+                <div id="${winId}_winkMenu" class="hidden absolute bottom-7 left-0 bg-white border border-slate-300 shadow-xl rounded p-1.5 flex flex-col gap-1 z-50 w-40 text-slate-800">
+                  <button onclick="sendWink('${winId}', '${email}', '💋 Beijo Wink')" class="hover:bg-blue-100 px-2 py-1 rounded text-left">💋 Beijo Wink</button>
+                  <button onclick="sendWink('${winId}', '${email}', '🧸 Ursinho')" class="hover:bg-blue-100 px-2 py-1 rounded text-left">🧸 Ursinho</button>
+                </div>
+              </div>
+
+              <button onclick="triggerNudge('${winId}', '${email}')" class="msn-btn px-2 py-0.5 rounded text-[11px] font-bold text-amber-800 flex items-center gap-1 ml-auto">
+                <i class="fa-solid fa-hand-pointer text-amber-600"></i>
+                <span>Chamar Atenção</span>
+              </button>
+            </div>
+
+            <div class="p-2 bg-slate-50 border-t border-slate-200 flex gap-2 items-end">
+              <textarea id="${winId}_input" rows="2" placeholder="Digite uma mensagem..." oninput="updateInputStyle('${winId}')" onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault(); submitMessage('${email}', '${winId}');}" class="flex-1 p-2 border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 text-xs resize-none shadow-inner"></textarea>
+              <button onclick="submitMessage('${email}', '${winId}')" class="msn-btn px-4 py-3 rounded font-bold text-xs text-blue-900 shadow">Enviar</button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      container.appendChild(win);
+      win.addEventListener('mousedown', () => { win.style.zIndex = ++highestZIndex; });
+      document.getElementById(winId + '_input').focus();
+    }
+
+    /* Formatação de Mensagem */
+    function toggleBold(winId) {
+      chatStyles[winId].bold = !chatStyles[winId].bold;
+      const btn = document.getElementById(winId + '_boldBtn');
+      if (chatStyles[winId].bold) btn.classList.add('btn-active'); else btn.classList.remove('btn-active');
+      updateInputStyle(winId);
+    }
+
+    function toggleItalic(winId) {
+      chatStyles[winId].italic = !chatStyles[winId].italic;
+      const btn = document.getElementById(winId + '_italicBtn');
+      if (chatStyles[winId].italic) btn.classList.add('btn-active'); else btn.classList.remove('btn-active');
+      updateInputStyle(winId);
+    }
+
+    function updateInputStyle(winId) {
+      const input = document.getElementById(winId + '_input');
+      if (!input) return;
+      input.style.fontWeight = chatStyles[winId].bold ? 'bold' : 'normal';
+      input.style.fontStyle = chatStyles[winId].italic ? 'italic' : 'normal';
+    }
+
+    function toggleEmojiMenu(winId) {
+      document.getElementById(winId + '_winkMenu').classList.add('hidden');
+      document.getElementById(winId + '_emojiMenu').classList.toggle('hidden');
+    }
+
+    function toggleWinkMenu(winId) {
+      document.getElementById(winId + '_emojiMenu').classList.add('hidden');
+      document.getElementById(winId + '_winkMenu').classList.toggle('hidden');
+    }
+
+    function insertEmoji(winId, emoji) {
+      const input = document.getElementById(winId + '_input');
+      input.value += emoji;
+      document.getElementById(winId + '_emojiMenu').classList.add('hidden');
+      input.focus();
+    }
+
+    /* Envio de Mensagem Real via Socket */
+    function submitMessage(receiverEmail, winId) {
+      const input = document.getElementById(winId + '_input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      let inlineStyle = '';
+      if (chatStyles[winId].bold) inlineStyle += 'font-weight: bold;';
+      if (chatStyles[winId].italic) inlineStyle += 'font-style: italic;';
+
+      const now = new Date();
+      const time = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+
+      const msgData = {
+        senderEmail: currentUser.email,
+        senderName: currentUser.name,
+        receiverEmail: receiverEmail,
+        text: text,
+        time: time,
+        style: inlineStyle
+      };
+
+      socket.emit('send_message', msgData);
+      input.value = '';
+    }
+
+    function sendWink(winId, receiverEmail, winkText) {
+      document.getElementById(winId + '_winkMenu').classList.add('hidden');
+      const now = new Date();
+      const time = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+
+      socket.emit('send_message', {
+        senderEmail: currentUser.email,
+        senderName: currentUser.name,
+        receiverEmail: receiverEmail,
+        text: `✨ Enviou um Wink: <b>${winkText}</b>`,
+        time: time
+      });
+    }
+
+    function triggerNudge(winId, receiverEmail) {
+      playNudgeSound();
+      const win = document.getElementById(winId);
+      win.classList.add('shake');
+      setTimeout(() => win.classList.remove('shake'), 550);
+
+      const now = new Date();
+      const time = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+
+      socket.emit('send_message', {
+        senderEmail: currentUser.email,
+        senderName: currentUser.name,
+        receiverEmail: receiverEmail,
+        text: '⚠️ Chamou a atenção!',
+        time: time,
+        isNudge: true
+      });
+    }
+
+    /* Receber Mensagem / Wink / Nudge em Tempo Real */
+    socket.on('receive_message', (data) => {
+      if (data.receiverEmail === currentUser.email || data.senderEmail === currentUser.email) {
+        const otherEmail = data.senderEmail === currentUser.email ? data.receiverEmail : data.senderEmail;
+        const otherName = data.senderEmail === currentUser.email ? 'Você' : data.senderName;
+        
+        let winId = 'chatWin_' + otherEmail.replace(/[@.]/g, '_');
+        
+        if (!document.getElementById(winId)) {
+          openChatWindow(otherEmail, otherName);
+        }
+
+        const log = document.getElementById(winId + '_log');
+        if (log) {
+          playReceiveMsgSound();
+          if (data.isNudge && data.senderEmail !== currentUser.email) {
+            const win = document.getElementById(winId);
+            if (win) {
+              win.classList.add('shake');
+              setTimeout(() => win.classList.remove('shake'), 550);
+            }
+          }
+
+          const isMe = data.senderEmail === currentUser.email;
+          log.innerHTML += `
+            <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
+              <div class="text-[10px] text-slate-500 mb-0.5 font-bold">${isMe ? currentUser.name : data.senderName} (${data.time})</div>
+              <div class="${isMe ? 'bg-blue-100 border-blue-300' : 'bg-slate-100 border-slate-300'} border px-2.5 py-1 rounded text-xs max-w-[85%] break-words shadow-sm" style="${data.style || ''}">
+                ${data.text}
+              </div>
+            </div>
+          `;
+          log.scrollTop = log.scrollHeight;
+        }
+      }
+    });
+  </script>
+</body>
+</html>
