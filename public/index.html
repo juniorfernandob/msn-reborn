@@ -18,6 +18,9 @@
       height: 100vh;
       width: 100vw;
       margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .msn-window-border {
@@ -77,25 +80,20 @@
       font-weight: bold;
     }
 
-    /* Tamanhos fixos clássicos para PC */
-    @media (min-width: 768px) {
-      .desktop-auth-size {
-        width: 340px !important;
-        height: 480px !important;
-      }
-      .desktop-main-size {
-        width: 320px !important;
-        height: 560px !important;
-      }
+    /* Padrão desktop e mobile flexível */
+    .app-window {
+      width: 320px;
+      height: 540px;
+      max-width: 96vw;
+      max-height: 96vh;
     }
 
-    /* Responsivo para Celular */
     @media (max-width: 767px) {
-      .mobile-full-size {
+      .app-window {
         width: 100vw !important;
         height: 100vh !important;
-        top: 0 !important;
-        left: 0 !important;
+        max-width: 100vw !important;
+        max-height: 100vh !important;
         border-radius: 0 !important;
       }
     }
@@ -127,13 +125,13 @@
     }
   </style>
 </head>
-<body class="flex items-center justify-center relative overflow-hidden h-screen w-screen">
+<body class="relative overflow-hidden h-screen w-screen flex items-center justify-center">
 
   <!-- DOCK DE JANELAS MINIMIZADAS -->
   <div id="minimizedDock" class="absolute bottom-2 left-2 flex flex-col gap-1.5 z-50 pointer-events-auto"></div>
 
   <!-- ================= 1. AUTH WINDOW (LOGIN & CADASTRO) ================= -->
-  <div id="authWindow" class="msn-window-border desktop-auth-size w-[92vw] rounded-t-lg rounded-b-sm flex flex-col shadow-2xl absolute z-45">
+  <div id="authWindow" class="msn-window-border app-window rounded-t-lg rounded-b-sm flex flex-col shadow-2xl z-45">
     <div class="msn-titlebar px-3 py-2 flex items-center justify-between">
       <div class="flex items-center gap-2 pointer-events-none">
         <svg class="w-4 h-4 text-emerald-600 drop-shadow" viewBox="0 0 24 24" fill="currentColor">
@@ -230,7 +228,7 @@
 
 
   <!-- ================= 2. MAIN MESSENGER WINDOW ================= -->
-  <div id="mainWindow" class="hidden msn-window-border desktop-main-size rounded-none flex flex-col shadow-2xl absolute z-40">
+  <div id="mainWindow" class="hidden msn-window-border app-window rounded-none flex flex-col shadow-2xl z-40">
     <div class="msn-titlebar px-3 py-2 flex items-center justify-between">
       <div class="flex items-center gap-2">
         <i class="fa-solid fa-user-group text-emerald-600 text-sm"></i>
@@ -303,33 +301,6 @@
     let allOnlineUsers = [];
     const chatStyles = {};
     let highestZIndex = 100;
-
-    function centerWindow(winElement, width, height) {
-      if (window.innerWidth < 768) {
-        winElement.className = winElement.className.replace(/desktop-\w+-size/g, '') + ' mobile-full-size';
-        winElement.style.position = 'fixed';
-        winElement.style.top = '0px';
-        winElement.style.left = '0px';
-        return;
-      }
-      
-      winElement.style.width = width;
-      winElement.style.height = height;
-      const w = winElement.offsetWidth || parseInt(width);
-      const h = winElement.offsetHeight || parseInt(height);
-      const x = Math.max(10, (window.innerWidth - w) / 2);
-      const y = Math.max(10, (window.innerHeight - h) / 2);
-      winElement.style.position = 'fixed';
-      winElement.style.left = `${x}px`;
-      winElement.style.top = `${y}px`;
-    }
-
-    /* Centralizar janela de login logo ao carregar */
-    window.addEventListener('DOMContentLoaded', () => {
-      const authWin = document.getElementById('authWindow');
-      centerWindow(authWin, '340px', '480px');
-      makeWindowDraggable(authWin);
-    });
 
     /* Audio Synth */
     const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -469,8 +440,6 @@
         const mainWin = document.getElementById('mainWindow');
         mainWin.classList.remove('hidden');
 
-        centerWindow(mainWin, '320px', '560px');
-
         document.getElementById('windowUserTitle').innerText = currentUser.name;
         document.getElementById('mainUserName').value = currentUser.name;
         document.getElementById('mainStatusSelect').value = currentUser.status;
@@ -586,9 +555,9 @@
         isDragging = false;
       }
 
-      // Mouse Events
       titleBar.addEventListener('mousedown', (e) => {
         if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+        if (window.innerWidth < 768) return; // Não arrasta em tela cheia de celular
         startDrag(e.clientX, e.clientY);
         const onMouseMove = (ev) => doDrag(ev.clientX, ev.clientY);
         const onMouseUp = () => {
@@ -600,9 +569,9 @@
         document.addEventListener('mouseup', onMouseUp);
       });
 
-      // Touch Events (Celular)
       titleBar.addEventListener('touchstart', (e) => {
         if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+        if (window.innerWidth < 768) return;
         const touch = e.touches[0];
         startDrag(touch.clientX, touch.clientY);
         const onTouchMove = (ev) => {
@@ -619,6 +588,11 @@
       }, { passive: true });
     }
 
+    window.addEventListener('DOMContentLoaded', () => {
+      makeWindowDraggable(document.getElementById('authWindow'));
+      makeWindowDraggable(document.getElementById('mainWindow'));
+    });
+
 
     /* ================= JANELAS DE CHAT ================= */
     function openChatWindow(email, name) {
@@ -631,7 +605,7 @@
         const bodyContent = win.querySelector('.chat-body-content');
         if (bodyContent) bodyContent.style.display = 'flex';
         const inputElem = document.getElementById(winId + '_input');
-        if (inputElem) inputElem.focus();
+        if (inputElem && window.innerWidth >= 768) inputElem.focus();
         return;
       }
 
@@ -642,11 +616,12 @@
       win.id = winId;
 
       const isMobile = window.innerWidth < 768;
-      win.className = `fixed ${isMobile ? 'w-full h-full top-0 left-0 rounded-none' : 'rounded-t-lg rounded-b-sm'} msn-window-border flex flex-col shadow-2xl resizable-window`;
+      win.className = `fixed ${isMobile ? 'w-full h-full top-0 left-0 rounded-none' : 'w-[420px] h-[440px] rounded-t-lg rounded-b-sm'} msn-window-border flex flex-col shadow-2xl resizable-window`;
       win.style.zIndex = ++highestZIndex;
 
       if (!isMobile) {
-        centerWindow(win, '420px', '440px');
+        win.style.top = '100px';
+        win.style.left = '150px';
       }
 
       win.innerHTML = `
@@ -750,7 +725,8 @@
     function maximizeChat(winId) {
       const win = document.getElementById(winId);
       if (win.style.width === '100vw') {
-        centerWindow(win, '420px', '440px');
+        win.style.width = '420px';
+        win.style.height = '440px';
       } else {
         win.style.width = '100vw';
         win.style.height = '100vh';
