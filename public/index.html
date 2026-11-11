@@ -29,7 +29,7 @@
     .msn-titlebar {
       background: linear-gradient(180deg, #e3f0fb 0%, #badaf6 45%, #92c4f4 50%, #b0d5f7 100%);
       border-bottom: 1px solid #5a94d0;
-      cursor: default;
+      cursor: move;
     }
 
     .msn-btn {
@@ -79,8 +79,8 @@
     .resizable-window {
       resize: both;
       overflow: hidden;
-      min-width: 320px;
-      min-height: 380px;
+      min-width: 340px;
+      min-height: 400px;
     }
 
     @keyframes nudgeShake {
@@ -141,16 +141,14 @@
         <button id="tabRegisterBtn" onclick="switchAuthTab('register')" class="flex-1 py-1.5 text-center bg-blue-100/60 hover:bg-white/60 border border-b-0 border-transparent rounded-t text-slate-600">Criar Conta</button>
       </div>
 
-      <!-- Alerta Sucesso -->
       <div id="emailConfirmationAlert" class="hidden w-full mb-3 p-2.5 bg-emerald-50 border border-emerald-400 rounded text-[11px] text-emerald-800 shadow-sm">
         <div class="font-bold flex items-center gap-1 mb-1">
           <i class="fa-solid fa-envelope-circle-check text-emerald-600 text-sm"></i>
           <span>Conta criada com sucesso!</span>
         </div>
-        <p class="leading-tight">Um e-mail de verificação foi enviado. Faça o login abaixo.</p>
+        <p class="leading-tight">Faça o login abaixo.</p>
       </div>
 
-      <!-- Alerta Erro Cadastro -->
       <div id="registerErrorAlert" class="hidden w-full mb-3 p-2.5 bg-red-50 border border-red-400 rounded text-[11px] text-red-800 shadow-sm">
         <div class="font-bold flex items-center gap-1 mb-0.5">
           <i class="fa-solid fa-triangle-exclamation text-red-600 text-sm"></i>
@@ -159,7 +157,6 @@
         <p id="registerErrorMsg">Preencha todos os campos corretamente.</p>
       </div>
 
-      <!-- Alerta Erro Login -->
       <div id="loginErrorAlert" class="hidden w-full mb-3 p-2.5 bg-red-50 border border-red-400 rounded text-[11px] text-red-800 shadow-sm">
         <div class="font-bold flex items-center gap-1 mb-0.5">
           <i class="fa-solid fa-triangle-exclamation text-red-600 text-sm"></i>
@@ -263,7 +260,7 @@
       <!-- Lista de Contatos -->
       <div class="flex-1 overflow-y-auto p-3 bg-white space-y-2" id="contactContainer">
         <div>
-          <div class="flex items-center justify-between text-xs font-bold text-slate-700 px-1 py-1.5 border-b border-slate-200 cursor-pointer" onclick="toggleCategory('onlineGroup')">
+          <div class="flex items-center justify-between text-xs font-bold text-slate-700 px-1 py-1.5 border-b border-slate-200 cursor-pointer">
             <span><i class="fa-solid fa-caret-down text-slate-500 mr-1"></i> Contatos Online na Rede (<span id="countOnline">0</span>)</span>
           </div>
           <div id="onlineGroup" class="mt-1 space-y-1"></div>
@@ -288,9 +285,7 @@
     let currentUser = null;
     let allOnlineUsers = [];
     const chatStyles = {};
-    const chatLogs = {};
     let highestZIndex = 100;
-    const windowStates = {};
 
     /* Audio Synth */
     const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -341,7 +336,6 @@
       osc.start(now); osc.stop(now + 0.5);
     }
 
-    /* Validador de E-mail */
     function isValidEmail(email) {
       return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
     }
@@ -425,6 +419,9 @@
         currentUser = res.user;
         currentUser.status = document.getElementById('loginInitialStatus').value;
 
+        // Entrar na sala pessoal no Socket para receber mensagens diretas
+        socket.emit('join_room', currentUser.email);
+
         document.getElementById('authWindow').classList.add('hidden');
         const mainWin = document.getElementById('mainWindow');
         mainWin.classList.remove('hidden');
@@ -449,7 +446,6 @@
       location.reload();
     }
 
-    /* Status & Perfil */
     function updateStatusDot() {
       const dot = document.getElementById('mainUserStatusDot');
       const colors = { online: 'bg-emerald-500', away: 'bg-amber-500', busy: 'bg-red-500', offline: 'bg-gray-400' };
@@ -479,7 +475,6 @@
       elem.innerText = tracks[(idx + 1) % tracks.length];
     }
 
-    /* Lista de Contatos */
     socket.on('update_contact_list', (users) => {
       allOnlineUsers = users;
       renderContacts();
@@ -516,7 +511,46 @@
     function filterContactList(val) { renderContacts(val); }
 
     function openAddContactWindow() {
-      alert('Na versão em rede, os usuários aparecem automaticamente na lista quando entram no sistema!');
+      alert('Os usuários aparecem automaticamente na lista quando entram no sistema!');
+    }
+
+
+    /* ================= DRAG & DROP DE JANELAS ================= */
+    function makeWindowDraggable(winElement) {
+      const titleBar = winElement.querySelector('.msn-titlebar');
+      let isDragging = false;
+      let startX, startY, initialX, initialY;
+
+      titleBar.addEventListener('mousedown', (e) => {
+        if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        
+        const rect = winElement.getBoundingClientRect();
+        initialX = rect.left;
+        initialY = rect.top;
+
+        winElement.style.position = 'fixed';
+        winElement.style.zIndex = ++highestZIndex;
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+      });
+
+      function onMouseMove(e) {
+        if (!isDragging) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        winElement.style.left = `${initialX + dx}px`;
+        winElement.style.top = `${initialY + dy}px`;
+      }
+
+      function onMouseUp() {
+        isDragging = false;
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+      }
     }
 
 
@@ -528,7 +562,10 @@
       if (win) {
         win.classList.remove('hidden');
         win.style.zIndex = ++highestZIndex;
-        document.getElementById(winId + '_input').focus();
+        const bodyContent = win.querySelector('.chat-body-content');
+        if (bodyContent) bodyContent.style.display = 'flex';
+        const inputElem = document.getElementById(winId + '_input');
+        if (inputElem) inputElem.focus();
         return;
       }
 
@@ -539,21 +576,23 @@
       win.id = winId;
       win.className = "fixed w-[480px] h-[460px] msn-window-border rounded-t-lg rounded-b-sm flex flex-col shadow-2xl resizable-window";
       win.style.zIndex = ++highestZIndex;
-      win.style.top = '100px';
+      win.style.top = '90px';
       win.style.left = '120px';
 
       win.innerHTML = `
         <div class="msn-titlebar px-2.5 py-1.5 flex items-center justify-between select-none">
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2 pointer-events-none">
             <i class="fa-regular fa-comment-dots text-blue-700 text-xs"></i>
             <span class="font-bold text-xs text-slate-800">Conversa com ${name}</span>
           </div>
           <div class="flex items-center gap-1">
-            <button onclick="document.getElementById('${winId}').remove()" class="w-5 h-4 bg-red-500 hover:bg-red-600 text-white rounded text-[9px] font-bold flex items-center justify-center">✕</button>
+            <button onclick="minimizeChat('${winId}', '${name}')" class="w-5 h-4 msn-btn text-[9px] font-bold flex items-center justify-center text-slate-700 hover:bg-blue-200">🗕</button>
+            <button onclick="maximizeChat('${winId}')" class="w-5 h-4 msn-btn text-[9px] font-bold flex items-center justify-center text-slate-700 hover:bg-blue-200">🗖</button>
+            <button onclick="document.getElementById('${winId}').remove(); removeDockItem('${winId}');" class="w-5 h-4 bg-red-500 hover:bg-red-600 text-white rounded text-[9px] font-bold flex items-center justify-center ml-1">✕</button>
           </div>
         </div>
 
-        <div class="flex flex-col flex-1 overflow-hidden relative bg-white">
+        <div class="chat-body-content flex flex-col flex-1 overflow-hidden relative bg-white">
           <div class="p-2.5 bg-gradient-to-r from-blue-100 via-blue-50 to-white border-b border-blue-300 flex items-center justify-between shrink-0">
             <div class="flex items-center gap-2.5 min-w-0">
               <div class="w-10 h-10 rounded bg-sky-300 border border-white flex items-center justify-center font-bold text-white shadow">
@@ -623,11 +662,57 @@
       `;
 
       container.appendChild(win);
+      makeWindowDraggable(win);
       win.addEventListener('mousedown', () => { win.style.zIndex = ++highestZIndex; });
       document.getElementById(winId + '_input').focus();
     }
 
-    /* Formatação de Mensagem */
+    /* Controle de Minimizar e Maximizar */
+    function minimizeChat(winId, name) {
+      const win = document.getElementById(winId);
+      win.classList.add('hidden');
+      addDockItem(winId, name);
+    }
+
+    function maximizeChat(winId) {
+      const win = document.getElementById(winId);
+      if (win.style.width === '100vw') {
+        win.style.width = '480px';
+        win.style.height = '460px';
+        win.style.top = '100px';
+        win.style.left = '120px';
+      } else {
+        win.style.width = '100vw';
+        win.style.height = '100vh';
+        win.style.top = '0px';
+        win.style.left = '0px';
+      }
+    }
+
+    function addDockItem(winId, name) {
+      const dock = document.getElementById('minimizedDock');
+      if (document.getElementById('dock_' + winId)) return;
+
+      const item = document.createElement('div');
+      item.id = 'dock_' + winId;
+      item.className = 'minimized-dock-item';
+      item.innerHTML = `<i class="fa-regular fa-comment text-blue-700"></i> <span class="truncate">${name}</span>`;
+      item.onclick = () => {
+        const win = document.getElementById(winId);
+        win.classList.remove('hidden');
+        win.style.zIndex = ++highestZIndex;
+        item.remove();
+        document.getElementById(winId + '_input').focus();
+      };
+      dock.appendChild(item);
+    }
+
+    function removeDockItem(winId) {
+      const dockItem = document.getElementById('dock_' + winId);
+      if (dockItem) dockItem.remove();
+    }
+
+    /* Formatação e Envio */
     function toggleBold(winId) {
       chatStyles[winId].bold = !chatStyles[winId].bold;
       const btn = document.getElementById(winId + '_boldBtn');
@@ -666,7 +751,6 @@
       input.focus();
     }
 
-    /* Envio de Mensagem Real via Socket */
     function submitMessage(receiverEmail, winId) {
       const input = document.getElementById(winId + '_input');
       const text = input.value.trim();
@@ -725,11 +809,11 @@
       });
     }
 
-    /* Receber Mensagem / Wink / Nudge em Tempo Real */
+    /* Evento em Tempo Real Otimizado */
     socket.on('receive_message', (data) => {
-      if (data.receiverEmail === currentUser.email || data.senderEmail === currentUser.email) {
+      if (currentUser && (data.receiverEmail === currentUser.email || data.senderEmail === currentUser.email)) {
         const otherEmail = data.senderEmail === currentUser.email ? data.receiverEmail : data.senderEmail;
-        const otherName = data.senderEmail === currentUser.email ? 'Você' : data.senderName;
+        const otherName = data.senderEmail === currentUser.email ? 'Contato' : data.senderName;
         
         let winId = 'chatWin_' + otherEmail.replace(/[@.]/g, '_');
         
