@@ -116,15 +116,18 @@
       animation: nudgeShake 0.55s ease-in-out infinite;
     }
 
-    /* Animação especial para os Winks */
-    @keyframes winkPop {
-      0% { transform: scale(0.3) rotate(-15deg); opacity: 0; }
-      50% { transform: scale(1.2) rotate(10deg); opacity: 1; }
-      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    /* Animação longa, gigante e imersiva para o Wink na tela inteira */
+    @keyframes immersiveWink {
+      0% { transform: scale(0.1) rotate(-30deg); opacity: 0; filter: blur(10px); }
+      20% { transform: scale(1.3) rotate(10deg); opacity: 1; filter: blur(0px); }
+      40% { transform: scale(1) rotate(-5deg); opacity: 1; }
+      70% { transform: scale(1.1) rotate(5deg); opacity: 1; }
+      90% { transform: scale(1) rotate(0deg); opacity: 1; }
+      100% { transform: scale(0.8) rotate(0deg); opacity: 0; filter: blur(8px); }
     }
 
-    .wink-animation {
-      animation: winkPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    .immersive-wink-overlay {
+      animation: immersiveWink 4s ease-in-out forwards;
     }
 
     ::-webkit-scrollbar { width: 10px; height: 10px; }
@@ -140,6 +143,9 @@
 
   <!-- DOCK DE JANELAS MINIMIZADAS -->
   <div id="minimizedDock" class="absolute bottom-2 left-2 flex flex-col gap-1.5 z-50 pointer-events-auto"></div>
+
+  <!-- CONTAINER DE WINK EM TELA CHEIA (ANIMADO) -->
+  <div id="winkOverlayContainer" class="fixed inset-0 pointer-events-none z-[99999] flex items-center justify-center"></div>
 
   <!-- ================= 1. AUTH WINDOW (LOGIN & CADASTRO) ================= -->
   <div id="authWindow" class="msn-window-border auth-window-size rounded-t-lg rounded-b-sm flex flex-col shadow-2xl z-45">
@@ -565,7 +571,7 @@
     }
 
 
-    /* ================= JANELA DE LOGIN ARRASTÁVEL ================= */
+    /* ================= JANELA DE LOGIN ARRASTÁVEL ================= -->
     function makeWindowDraggable(winElement) {
       const titleBar = winElement.querySelector('.msn-titlebar');
       let isDragging = false;
@@ -604,7 +610,7 @@
     });
 
 
-    /* ================= JANELAS DE CHAT COM LIMITE DE TELA E ESC ================= */
+    /* ================= JANELAS DE CHAT COM LIMITE DE TELA E ESC ================= -->
     function makeChatDraggable(winElement) {
       const titleBar = winElement.querySelector('.msn-titlebar');
       let isDragging = false;
@@ -628,7 +634,6 @@
           let newX = initialX + (ev.clientX - startX);
           let newY = initialY + (ev.clientY - startY);
 
-          // Restringe aos limites da tela para não sumir
           const maxX = window.innerWidth - 100;
           const maxY = window.innerHeight - 50;
           if (newX < -300) newX = -300;
@@ -678,7 +683,6 @@
         win.style.left = '200px';
       }
 
-      // Adiciona listener para fechar com a tecla ESC
       win.tabIndex = 0;
       win.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
@@ -720,14 +724,14 @@
             <div class="text-center text-[10px] text-gray-400">--- Conversa iniciada com ${name} ---</div>
           </div>
 
-          <!-- Barra de Ferramentas Chat com mais Emojis -->
+          <!-- Barra de Ferramentas Chat -->
           <div class="flex flex-col shrink-0">
             <div class="px-2 py-1 bg-slate-100 border-t border-slate-200 flex items-center gap-1.5 text-xs flex-wrap">
               <button id="${winId}_boldBtn" onclick="toggleBold('${winId}')" class="msn-btn px-1.5 py-0.5 rounded font-bold">A<b>B</b></button>
               <button id="${winId}_italicBtn" onclick="toggleItalic('${winId}')" class="msn-btn px-1.5 py-0.5 rounded italic"><i>I</i></button>
               <div class="h-4 w-px bg-slate-300"></div>
 
-              <!-- Emojis Expandidos -->
+              <!-- Emojis -->
               <div class="relative">
                 <button onclick="toggleEmojiMenu('${winId}')" class="msn-btn p-1 px-1.5 rounded flex items-center gap-1">
                   <span class="text-amber-500 text-sm leading-none">😊</span>
@@ -747,7 +751,7 @@
                 </div>
               </div>
 
-              <!-- Winks Animados -->
+              <!-- Winks Limpos no Chat e Gigantes na Tela Inteira -->
               <div class="relative">
                 <button onclick="toggleWinkMenu('${winId}')" class="msn-btn px-1.5 py-0.5 rounded text-[11px] font-bold text-purple-900 flex items-center gap-1">
                   <i class="fa-solid fa-wand-magic-sparkles text-purple-600"></i>
@@ -755,9 +759,9 @@
                   <i class="fa-solid fa-caret-down text-[9px]"></i>
                 </button>
                 <div id="${winId}_winkMenu" class="hidden absolute bottom-7 left-0 bg-white border border-slate-300 shadow-xl rounded p-1.5 flex flex-col gap-1 z-50 w-40 text-slate-800 text-xs">
-                  <button onclick="sendWink('${winId}', '${email}', '💋 Beijo Wink', 'kiss')" class="hover:bg-blue-100 px-2 py-1 rounded text-left">💋 Beijo Wink</button>
-                  <button onclick="sendWink('${winId}', '${email}', '🧸 Ursinho Fofo', 'bear')" class="hover:bg-blue-100 px-2 py-1 rounded text-left">🧸 Ursinho Fofo</button>
-                  <button onclick="sendWink('${winId}', '${email}', '🌹 Rosa Romântica', 'rose')" class="hover:bg-blue-100 px-2 py-1 rounded text-left">🌹 Rosa Romântica</button>
+                  <button onclick="sendWink('${winId}', '${email}', '💋 Beijo', '💋')" class="hover:bg-blue-100 px-2 py-1 rounded text-left">💋 Beijo Wink</button>
+                  <button onclick="sendWink('${winId}', '${email}', '🧸 Ursinho', '🧸')" class="hover:bg-blue-100 px-2 py-1 rounded text-left">🧸 Ursinho Fofo</button>
+                  <button onclick="sendWink('${winId}', '${email}', '🌹 Rosa', '🌹')" class="hover:bg-blue-100 px-2 py-1 rounded text-left">🌹 Rosa Romântica</button>
                 </div>
               </div>
 
@@ -777,7 +781,7 @@
 
       container.appendChild(win);
       makeChatDraggable(win);
-      win.focus(); // Foca na janela para o ESC funcionar de primeira
+      win.focus();
 
       win.addEventListener('mousedown', () => { 
         win.style.zIndex = ++highestZIndex; 
@@ -789,7 +793,6 @@
       if (inputElem && !isMobile) inputElem.focus();
     }
 
-    /* Controle de Minimizar e Maximizar */
     function minimizeChat(winId, name) {
       const win = document.getElementById(winId);
       win.classList.add('hidden');
@@ -834,7 +837,6 @@
       if (dockItem) dockItem.remove();
     }
 
-    /* Formatação e Envio */
     function toggleBold(winId) {
       chatStyles[winId].bold = !chatStyles[winId].bold;
       const btn = document.getElementById(winId + '_boldBtn');
@@ -898,24 +900,24 @@
       input.value = '';
     }
 
-    function sendWink(winId, receiverEmail, winkText, winkType) {
+    /* Função para disparar o Wink: aviso limpo no chat e animação gigante na tela do amigo */
+    function sendWink(winId, receiverEmail, winkName, emojiChar) {
       document.getElementById(winId + '_winkMenu').classList.add('hidden');
       const now = new Date();
       const time = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 
-      let winkHtml = `<div class="wink-animation flex flex-col items-center justify-center p-3 bg-gradient-to-tr from-purple-100 to-pink-100 border border-purple-300 rounded-lg shadow-md my-1">`;
-      if (winkType === 'kiss') winkHtml += `<span class="text-3xl mb-1">💋😘✨</span>`;
-      else if (winkType === 'bear') winkHtml += `<span class="text-3xl mb-1">🧸💖🧸</span>`;
-      else winkHtml += `<span class="text-3xl mb-1">🌹✨❤️</span>`;
-      winkHtml += `<span class="font-bold text-purple-900 text-xs">${winkText}</span></div>`;
+      // Mensagem limpa e discreta no histórico do chat
+      const chatNotice = `<span class="italic text-purple-700">✨ Enviou um Wink (${winkName})</span>`;
 
       socket.emit('send_message', {
         senderEmail: currentUser.email,
         senderName: currentUser.name,
         receiverEmail: receiverEmail,
-        text: winkHtml,
+        text: chatNotice,
         time: time,
-        isWink: true
+        isWink: true,
+        winkEmoji: emojiChar,
+        winkName: winkName
       });
     }
 
@@ -938,6 +940,38 @@
       });
     }
 
+    /* Executa o efeito visual gigante de Wink na tela inteira */
+    function playImmersiveWink(emojiChar, senderName) {
+      const container = document.getElementById('winkOverlayContainer');
+      
+      const winkBox = document.createElement('div');
+      winkBox.className = 'immersive-wink-overlay flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm p-10 rounded-3xl shadow-2xl border-4 border-purple-400';
+      winkBox.innerHTML = `
+        <span class="text-9xl mb-4 drop-shadow-[0_15px_15px_rgba(0,0,0,0.6)]">${emojiChar}</span>
+        <span class="text-white font-bold text-2xl drop-shadow-md bg-purple-900/80 px-4 py-1.5 rounded-full border border-purple-300">${senderName} enviou um Wink!</span>
+      `;
+      
+      container.appendChild(winkBox);
+
+      // Toca um som nostálgico de efeito especial
+      initAudio();
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(300, now);
+      osc.frequency.exponentialRampToValueAtTime(800, now + 1.5);
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 2.0);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(now); osc.stop(now + 2.0);
+
+      // Remove o elemento após a animação de 4 segundos terminar
+      setTimeout(() => {
+        winkBox.remove();
+      }, 4000);
+    }
+
     /* Evento em Tempo Real */
     socket.on('receive_message', (data) => {
       if (currentUser && (data.receiverEmail === currentUser.email || data.senderEmail === currentUser.email)) {
@@ -953,6 +987,7 @@
         const log = document.getElementById(winId + '_log');
         if (log) {
           playReceiveMsgSound();
+          
           if (data.isNudge && data.senderEmail !== currentUser.email) {
             const win = document.getElementById(winId);
             if (win) {
@@ -961,11 +996,16 @@
             }
           }
 
+          // Se for Wink e veio do outro usuário, dispara a animação gigante na tela dele
+          if (data.isWink && data.senderEmail !== currentUser.email) {
+            playImmersiveWink(data.winkEmoji, data.senderName);
+          }
+
           const isMe = data.senderEmail === currentUser.email;
           log.innerHTML += `
             <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
               <div class="text-[10px] text-slate-500 mb-0.5 font-bold">${isMe ? currentUser.name : data.senderName} (${data.time})</div>
-              <div class="${isMe && !data.isWink ? 'bg-blue-100 border-blue-300' : (!data.isWink ? 'bg-slate-100 border-slate-300' : 'bg-transparent border-none')} ${!data.isWink ? 'border px-2.5 py-1 rounded text-xs max-w-[85%] break-words shadow-sm' : ''}" style="${!data.isWink ? (data.style || '') : ''}">
+              <div class="${isMe ? 'bg-blue-100 border-blue-300' : 'bg-slate-100 border-slate-300'} border px-2.5 py-1 rounded text-xs max-w-[85%] break-words shadow-sm" style="${data.style || ''}">
                 ${data.text}
               </div>
             </div>
