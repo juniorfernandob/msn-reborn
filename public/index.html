@@ -80,6 +80,17 @@
       font-weight: bold;
     }
 
+    /* Animação para piscar o dock em roxo quando houver mensagem nova */
+    @keyframes dockPurpleFlash {
+      0% { background: #d8b4fe; border-color: #9333ea; color: #581c87; box-shadow: 0 0 10px #a855f7; }
+      50% { background: #e3f0fb; border-color: #164677; color: #092748; box-shadow: none; }
+      100% { background: #d8b4fe; border-color: #9333ea; color: #581c87; box-shadow: 0 0 10px #a855f7; }
+    }
+
+    .dock-unread-flash {
+      animation: dockPurpleFlash 0.8s ease-in-out infinite;
+    }
+
     .fullscreen-main-window {
       width: 100vw !important;
       height: 100vh !important;
@@ -111,15 +122,18 @@
       animation: nudgeShake 0.5s ease-in-out;
     }
 
-    /* Animação limpa e direta do Wink Gigante */
-    @keyframes popWink {
-      0% { transform: scale(0.1); opacity: 0; }
-      50% { transform: scale(1.2); opacity: 1; }
-      100% { transform: scale(1); opacity: 1; }
+    /* Animação fluida e gigante somente para o emoji do Wink */
+    @keyframes pureWinkAnim {
+      0% { transform: scale(0.1) rotate(-30deg); opacity: 0; filter: blur(10px); }
+      25% { transform: scale(1.4) rotate(15deg); opacity: 1; filter: blur(0px); }
+      50% { transform: scale(1.1) rotate(-5deg); opacity: 1; }
+      75% { transform: scale(1.25) rotate(5deg); opacity: 1; }
+      90% { transform: scale(1) rotate(0deg); opacity: 1; }
+      100% { transform: scale(0.3) rotate(0deg); opacity: 0; filter: blur(8px); }
     }
 
-    .popup-anim {
-      animation: popWink 0.3s ease-out forwards;
+    .pure-wink-effect {
+      animation: pureWinkAnim 4s ease-in-out forwards;
     }
 
     ::-webkit-scrollbar { width: 10px; height: 10px; }
@@ -136,12 +150,9 @@
   <!-- DOCK DE JANELAS MINIMIZADAS -->
   <div id="minimizedDock" class="absolute bottom-2 left-2 flex flex-col gap-1.5 z-50 pointer-events-auto"></div>
 
-  <!-- TELA CHEIA DO WINK (BLOQUEIA A TELA INTEIRA COM O EMOJI GIGANTE) -->
-  <div id="forcedWinkScreen" class="fixed inset-0 z-[999999] hidden flex items-center justify-center bg-black/85 backdrop-blur-md">
-    <div class="popup-anim flex flex-col items-center justify-center p-12 rounded-3xl border-4 border-purple-400 bg-purple-950 shadow-2xl">
-      <div id="forcedWinkEmoji" class="text-[150px] mb-4 drop-shadow-2xl">💋</div>
-      <div id="forcedWinkText" class="text-white font-bold text-3xl px-8 py-3 rounded-full bg-purple-900 border-2 border-purple-300 shadow-xl text-center">Fulano enviou um Wink!</div>
-    </div>
+  <!-- TELA DO WINK PURO (SOMENTE O EMOJI GIGANTE NA TELA) -->
+  <div id="forcedWinkScreen" class="fixed inset-0 z-[999999] hidden pointer-events-none flex items-center justify-center">
+    <div id="forcedWinkEmoji" class="text-[220px] drop-shadow-[0_35px_35px_rgba(0,0,0,0.9)]">💋</div>
   </div>
 
   <!-- ================= 1. AUTH WINDOW ================= -->
@@ -315,6 +326,7 @@
     let allOnlineUsers = [];
     const chatStyles = {};
     let highestZIndex = 100;
+    let winkTimeout = null;
 
     /* Audio Synth */
     const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -607,7 +619,7 @@
     });
 
 
-    /* ================= JANELAS DE CHAT RESPONSIVAS E COM LIMITES ================= */
+    /* ================= JANELAS DE CHAT ================= */
     function makeChatDraggable(winElement) {
       const titleBar = winElement.querySelector('.msn-titlebar');
       let isDragging = false;
@@ -669,6 +681,10 @@
         }
         const bodyContent = win.querySelector('.chat-body-content');
         if (bodyContent) bodyContent.style.display = 'flex';
+        
+        // Remove o aviso de piscando no dock se existir
+        removeDockItem(winId);
+
         const inputElem = document.getElementById(winId + '_input');
         if (inputElem) inputElem.focus();
         return;
@@ -801,7 +817,7 @@
     function minimizeChat(winId, name) {
       const win = document.getElementById(winId);
       win.classList.add('hidden');
-      addDockItem(winId, name);
+      addDockItem(winId, name, false);
     }
 
     function maximizeChat(winId) {
@@ -817,24 +833,34 @@
       }
     }
 
-    function addDockItem(winId, name) {
+    function addDockItem(winId, name, isUnread = false) {
       const dock = document.getElementById('minimizedDock');
-      if (document.getElementById('dock_' + winId)) return;
+      let item = document.getElementById('dock_' + winId);
 
-      const item = document.createElement('div');
-      item.id = 'dock_' + winId;
-      item.className = 'minimized-dock-item';
-      item.innerHTML = `<i class="fa-regular fa-comment text-blue-700"></i> <span class="truncate">${name}</span>`;
+      if (!item) {
+        item = document.createElement('div');
+        item.id = 'dock_' + winId;
+        dock.appendChild(item);
+      }
+
+      // Aplica estilo normal ou piscando em roxo dependendo se tem mensagem não lida
+      if (isUnread) {
+        item.className = 'minimized-dock-item dock-unread-flash';
+        item.innerHTML = `<i class="fa-solid fa-bell text-purple-700 animate-bounce"></i> <span class="truncate">${name} (Nova msg!)</span>`;
+      } else {
+        item.className = 'minimized-dock-item';
+        item.innerHTML = `<i class="fa-regular fa-comment text-blue-700"></i> <span class="truncate">${name}</span>`;
+      }
+
       item.onclick = () => {
         const win = document.getElementById(winId);
         win.classList.remove('hidden');
         win.style.zIndex = ++highestZIndex;
-        item.remove();
+        removeDockItem(winId);
         win.focus();
         const input = document.getElementById(winId + '_input');
         if (input && window.innerWidth >= 768) input.focus();
       };
-      dock.appendChild(item);
     }
 
     function removeDockItem(winId) {
@@ -912,7 +938,6 @@
 
       const chatNotice = `<span class="italic text-purple-700 font-bold">✨ Enviou um Wink (${winkName})</span>`;
 
-      // ENVIANDO COM A FLAG CLARA 'isWink: true'
       socket.emit('send_message', {
         senderEmail: currentUser.email,
         senderName: currentUser.name,
@@ -944,21 +969,22 @@
       });
     }
 
-    /* EXIBIÇÃO DIRETA E FORÇADA DO WINK NA TELA */
-    function displayForcedWink(emojiChar, senderName) {
+    /* WINK PURO (SÓ O EMOJI GIGANTE NA TELA) */
+    function displayPureWink(emojiChar) {
       const screen = document.getElementById('forcedWinkScreen');
       const emojiEl = document.getElementById('forcedWinkEmoji');
-      const textEl = document.getElementById('forcedWinkText');
 
-      if (!screen) return;
+      if (!screen || !emojiEl) return;
 
       emojiEl.innerText = emojiChar;
-      textEl.innerText = `${senderName} enviou um Wink!`;
+      
+      // Reseta e dispara animação limpa do emoji
+      emojiEl.classList.remove('pure-wink-effect');
+      void emojiEl.offsetWidth;
+      emojiEl.classList.add('pure-wink-effect');
 
-      // Mostra a tela inteira com o Wink
       screen.classList.remove('hidden');
 
-      // Toca som se possível
       try {
         initAudio();
         const now = audioCtx.currentTime;
@@ -966,16 +992,17 @@
         const gain = audioCtx.createGain();
         osc.type = 'sine';
         osc.frequency.setValueAtTime(400, now);
-        osc.frequency.exponentialRampToValueAtTime(800, now + 1);
+        osc.frequency.exponentialRampToValueAtTime(900, now + 1);
         gain.gain.setValueAtTime(0.3, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
         osc.connect(gain); gain.connect(audioCtx.destination);
         osc.start(now); osc.stop(now + 1.5);
       } catch(e) {}
 
-      // Some sozinho após 4 segundos
-      setTimeout(() => {
+      if (winkTimeout) clearTimeout(winkTimeout);
+      winkTimeout = setTimeout(() => {
         screen.classList.add('hidden');
+        emojiEl.classList.remove('pure-wink-effect');
       }, 4000);
     }
 
@@ -985,9 +1012,17 @@
         const otherName = data.senderEmail === currentUser.email ? 'Contato' : data.senderName;
         
         let winId = 'chatWin_' + otherEmail.replace(/[@.]/g, '_');
+        let win = document.getElementById(winId);
         
-        if (!document.getElementById(winId)) {
+        // Verifica se a janela de chat está oculta (minimizada) ou se nem existe ainda
+        const isMinimizedOrClosed = !win || win.classList.contains('hidden');
+
+        if (!win) {
           openChatWindow(otherEmail, otherName);
+          win = document.getElementById(winId);
+          if (isMinimizedOrClosed) {
+            win.classList.add('hidden'); // Mantém oculta se veio em segundo plano
+          }
         }
 
         const log = document.getElementById(winId + '_log');
@@ -995,16 +1030,15 @@
           playReceiveMsgSound();
           
           if (data.isNudge && data.senderEmail !== currentUser.email) {
-            const win = document.getElementById(winId);
-            if (win) {
+            if (win && !win.classList.contains('hidden')) {
               win.classList.add('shake');
               setTimeout(() => win.classList.remove('shake'), 500);
             }
           }
 
-          // AQUI É O GATILHO: Qualquer mensagem recebida que tenha isWink: true vai abrir a tela cheia
+          // Dispara o Wink puro se for o caso
           if (data.isWink === true) {
-            displayForcedWink(data.winkEmoji, data.senderName);
+            displayPureWink(data.winkEmoji || '💋');
           }
 
           const isMe = data.senderEmail === currentUser.email;
@@ -1017,6 +1051,12 @@
             </div>
           `;
           log.scrollTop = log.scrollHeight;
+
+          // Se a janela estiver minimizada ou fechada e a mensagem veio do seu amigo, faz o item do dock piscar em roxo!
+          if (isMinimizedOrClosed && data.senderEmail !== currentUser.email) {
+            minimizeChat(winId, otherName);
+            addDockItem(winId, otherName, true); // true ativa o alerta roxo piscando
+          }
         }
       }
     });
